@@ -16,6 +16,11 @@ import {
 } from "react";
 
 import { IDL } from "@dfinity/candid";
+import type {
+  InterceptorErrorData,
+  InterceptorRequestData,
+  InterceptorResponseData,
+} from "./interceptor-data.type";
 
 /**
  *
@@ -75,41 +80,58 @@ export function ActorProvider<T>({
   children: ReactNode;
 
   /** Callback function that will be called before the request is sent. */
-  onRequest?: (args: unknown) => void;
+  onRequest?: (data: InterceptorRequestData) => unknown[];
 
   /** Callback function that will be called before the response is returned. */
-  onResponse?: (response: unknown) => void;
+  onResponse?: (data: InterceptorResponseData) => unknown;
 
   /** Callback function that will be called if the request fails. */
-  onRequestError?: (error: unknown) => void;
+  onRequestError?: (data: InterceptorErrorData) => Error | TypeError | unknown;
 
   /** Callback function that will be called if the response fails. */
-  onResponseError?: (error: unknown) => void;
+  onResponseError?: (data: InterceptorErrorData) => Error | TypeError | unknown;
 }) {
   const [actor, setActor] = useState<ActorSubclass<typeof context>>();
 
   useEffect(() => {
-    function createErrorHandlingProxy<T>(
-      actor: ActorSubclass<T>
+    function createInterceptorProxy<T>(
+      _actor: ActorSubclass<T>
     ): ActorSubclass<T> {
-      return new Proxy(actor, {
+      return new Proxy(_actor, {
         get(target, prop, receiver) {
           const originalProperty = Reflect.get(target, prop, receiver);
           if (typeof originalProperty === "function") {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return async (...args: any[]) => {
+            return async (...args: unknown[]) => {
               try {
-                onRequest?.(args);
-                const response = await originalProperty.apply(this, args);
-                onResponse?.(response);
-                return response;
-              } catch (err) {
-                if (err instanceof TypeError) {
-                  onRequestError?.(err);
-                } else {
-                  onResponseError?.(err);
+                if (onRequest) {
+                  args = onRequest({ methodName: prop as string, args });
                 }
-                throw err; // Re-throw the error after handling
+                const response = await originalProperty.apply(this, args);
+                if (onResponse) {
+                  return onResponse({
+                    methodName: prop as string,
+                    args,
+                    response,
+                  });
+                }
+                return response;
+              } catch (error) {
+                if (error instanceof TypeError) {
+                  if (onRequestError)
+                    error = onRequestError({
+                      methodName: prop as string,
+                      args,
+                      error,
+                    });
+                } else {
+                  if (onResponseError)
+                    error = onResponseError({
+                      methodName: prop as string,
+                      args,
+                      error,
+                    });
+                }
+                throw error;
               }
             };
           }
@@ -138,7 +160,7 @@ export function ActorProvider<T>({
         ...actorOptions,
       });
 
-      setActor(createErrorHandlingProxy(_actor));
+      setActor(createInterceptorProxy(_actor));
     })();
   }, [
     identity,
