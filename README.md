@@ -1,14 +1,16 @@
 # ic-use-actor
 
-A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and middleware support.
-
-**GPT-4 generated description below, not 100%, to be edited.**
+A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and request/response interceptors.
 
 ## Features
 
-- **Type Safety**: Ensures that the actors conform to the service definitions, providing strong typing benefits.
-- **Shared Actor Context**: Utilizes React context to share the same actor across multiple components, allowing for efficient reuse in numerous calls.
-- **Middleware Support**: Offers `onRequest`, `onResponse`, `onRequestError`, and `onResponseError` middleware for intercepting and processing requests and responses.
+- **Shared Actor Context**: Allows the same actor to be used across multiple components.
+- **Typescript Support**: Makes full use of the canister service definitions to provide type safety for requests and responses.
+- **Interceptors**: `onRequest`, `onResponse`, `onRequestError`, and `onResponseError` callbacks allow for intercepting and processing requests and responses.
+
+## Pre-requisites
+
+`ic-use-actor` needs an Internet Computer (IC) identity to work. The examples below uses `ic-use-siwe-identity` as an identity provider. You can use any other identity provider as long as it returns a valid IC identity.
 
 ## Usage
 
@@ -16,7 +18,7 @@ To use `ic-use-actor` in your React application, follow these steps:
 
 ### Setting Up the Actor Context and Hook
 
-First, create an actor context and a corresponding hook for your IC service:
+First, create an actor context and a corresponding hook for your IC service. The hook is exported and used in your components to access the actor.
 
 ```jsx
 import {
@@ -25,34 +27,63 @@ import {
 } from "ic-use-actor";
 import { _SERVICE } from "path-to/your-service.did";
 
-export const actorContext = createActorContext<_SERVICE>();
+const actorContext = createActorContext<_SERVICE>();
 export const useActor = createUseActorHook<_SERVICE>(actorContext);
 ```
 
-### Using ActorProvider to Wrap Your App
+### Creating an Actor Provider Component
 
-Wrap your application's root component with ActorProvider and pass in the necessary props:
+Create one or more ActorProvider components to provide access to your canisters. ActorProviders can be nested to provide access to different canisters.
 
 ```jsx
-import { ActorProvider } from "ic-use-actor";
-import { idlFactory, canisterId } from "path-to/your-service";
+// Actors.tsx
+
+import { ReactNode } from "react";
+import {
+  ActorProvider,
+  createActorContext,
+  createUseActorHook,
+} from "ic-use-actor";
+import {
+  canisterId,
+  idlFactory,
+} from "path-to/your-service/index";
+import { _SERVICE } from "path-to/your-service.did";
 import { useSiweIdentity } from "ic-use-siwe-identity";
 
-function App({ children }) {
+const actorContext = createActorContext<_SERVICE>();
+export const useActor = createUseActorHook<_SERVICE>(actorContext);
+
+export default function Actors({ children }: { children: ReactNode }) {
   const { identity } = useSiweIdentity();
 
   return (
-    <ActorProvider
+    <ActorProvider<_SERVICE>
       canisterId={canisterId}
       context={actorContext}
       identity={identity}
       idlFactory={idlFactory}
-      // Optional middleware callbacks
-      onRequestError={errorHandler}
-      onResponseError={responseErrorHandler}
     >
       {children}
     </ActorProvider>
+  );
+}
+```
+
+### Wrapping Your Application
+
+Wrap your application's root component with ActorProvider to provide all your components with access to the actor.
+
+```jsx
+// App.tsx
+
+import Actors from "./Actors";
+
+function App() {
+  return (
+    <Actors>
+      <MyApplication />
+    </Actors>
   );
 }
 ```
@@ -62,12 +93,67 @@ function App({ children }) {
 In your components, use the useActor hook to access the actor:
 
 ```jsx
+// AnyComponent.tsx
+
 import { useActor } from "path-to/useActor";
 
-function MyComponent() {
+function AnyComponent() {
   const { actor } = useActor();
 
   // Use the actor for calling methods on your canister
+  React.useEffect(() => {
+    actor
+      .my_method()
+      .then((result) => {
+        // Do something with the result
+      })
+      .catch((error) => {
+        // Handle the error
+      });
+  }, []);
+}
+```
+
+### Setting up interceptors
+
+Interceptors can be used to intercept requests and responses. You can use them to modify requests, log requests and responses, or perform other actions.
+
+```jsx
+export default function Actor({ children }: { children: ReactNode }) {
+  const { identity } = useSiweIdentity();
+
+  const handleRequest = (data: InterceptorRequestData) => {
+    // Do something
+    // data: { args: unknown[], methodName: string }
+    return data.args;
+  };
+
+  const handleResponse = (data: InterceptorResponseData) => {
+    // Do something
+    // data: { args: unknown[], methodName: string, response: unknown }
+    return data.response;
+  };
+
+  const handleError = (data: InterceptorErrorData) => {
+    // Do something
+    // data: { args: unknown[], methodName: string, error: unknown }
+    return data.error;
+  };
+
+  return (
+    <ActorProvider<_SERVICE>
+      canisterId={canisterId}
+      context={actorContext}
+      identity={identity}
+      idlFactory={idlFactory}
+      onRequest={handleRequest}
+      onRequestError={handleError}
+      onResponse={handleResponse}
+      onResponseError={handleError}
+    >
+      {children}
+    </ActorProvider>
+  );
 }
 ```
 
