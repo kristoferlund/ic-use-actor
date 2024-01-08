@@ -2,6 +2,9 @@
 
 A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and request/response interceptors. `ic-use-actor` makes interacting with Internet Computer canisters more fun!
 
+![npm](https://img.shields.io/npm/v/ic-use-actor)
+![npm](https://img.shields.io/npm/dw/ic-use-actor)
+
 ## Features
 
 - **Shared Actor Context**: Allows the same actor to be used across multiple components.
