@@ -174,6 +174,10 @@ export default function Actor({ children }: { children: ReactNode }) {
 }
 ```
 
+## Updates
+
+See the [CHANGELOG](CHANGELOG.md) for details on updates.
+
 ## Contributing
 
 Contributions are welcome. Please submit your pull requests or open issues to propose changes or report bugs.
