@@ -4,7 +4,6 @@ import {
   type ActorSubclass,
   HttpAgent,
   type HttpAgentOptions,
-  SignIdentity,
   type Identity,
 } from "@dfinity/agent";
 import {
@@ -15,7 +14,6 @@ import {
   type Context,
   useContext,
 } from "react";
-
 import { IDL } from "@dfinity/candid";
 import type {
   InterceptorErrorData,
@@ -30,10 +28,29 @@ export type ActorContextType<T> = {
   actor?: ActorSubclass<T>;
 };
 
+/**
+ * Creates a React context that will be used to pass the actor down the component tree. Invoke the `createActorContext` function with the _SERVICE
+ * type argument, where _SERVICE represents the canister service definition.
+ *
+ * @example
+ * ```ts
+ * const ActorContext = createActorContext<_SERVICE>();
+ * ```
+ */
 export function createActorContext<T>() {
   return createContext<ActorContextType<T> | undefined>(undefined);
 }
 
+/**
+ * Creates a React hook that can be used to access the actor from any component in the component tree. Invoke the `createUseActorHook` function with the
+ * React context returned by the `createActorContext` function. The function needs to be invoked with the _SERVICE type argument, where _SERVICE
+ * represents the canister service definition. Export the hook to be able to use it in other components.
+ *
+ * @example
+ * ```ts
+ * export const useActor = createUseActorHook<_SERVICE>(actorContext);
+ * ```
+ */
 export function createUseActorHook<T>(
   context: Context<ActorContextType<T> | undefined>
 ) {
@@ -46,6 +63,44 @@ export function createUseActorHook<T>(
   };
 }
 
+/**
+ * The ActorProvider component is used to provide the actor to the component tree. The component needs to be wrapped around the component tree that
+ * needs to access the actor.
+ *
+ * @example
+ * ```tsx
+ * import { ReactNode } from "react";
+ * import {
+ *   ActorProvider,
+ *   createActorContext,
+ *   createUseActorHook,
+ * } from "ic-use-actor";
+ * import {
+ *  canisterId,
+ *   idlFactory,
+ * } from "path-to/your-service/index";
+ * import { _SERVICE } from "path-to/your-service.did";
+ * import { useSiweIdentity } from "ic-use-siwe-identity";
+ *
+ * const actorContext = createActorContext<_SERVICE>();
+ * export const useActor = createUseActorHook<_SERVICE>(actorContext);
+ *
+ * export default function Actors({ children }: { children: ReactNode }) {
+ *   const { identity } = useSiweIdentity();
+ *
+ *   return (
+ *     <ActorProvider<_SERVICE>
+ *       canisterId={canisterId}
+ *       context={actorContext}
+ *       identity={identity}
+ *       idlFactory={idlFactory}
+ *     >
+ *       {children}
+ *     </ActorProvider>
+ *   );
+ * }
+ * ```
+ */
 export function ActorProvider<T>({
   httpAgentOptions,
   actorOptions,
