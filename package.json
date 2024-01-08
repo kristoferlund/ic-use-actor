@@ -2,7 +2,7 @@
   "name": "ic-use-actor",
   "version": "0.0.1",
   "description": "React Hook and context provider to make interacting with Internet Computer canisters more fun!",
-  "author": "kKristofer Lund <kristofer@kristoferlund.se>",
+  "author": "Kristofer Lund <kristofer@kristoferlund.se>",
   "repository": {
     "type": "git",
     "url": "https://github.com/kristoferlund/ic-use-actor"
