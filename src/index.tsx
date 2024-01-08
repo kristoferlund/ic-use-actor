@@ -5,6 +5,7 @@ import {
   HttpAgent,
   type HttpAgentOptions,
   SignIdentity,
+  type Identity,
 } from "@dfinity/agent";
 import {
   type ReactNode,
@@ -68,7 +69,7 @@ export function ActorProvider<T>({
   context: React.Context<ActorContextType<T> | undefined>;
 
   /** The identity used for signing requests. */
-  identity?: SignIdentity;
+  identity?: Identity;
 
   /** A factory function provided by the DFINITY Candid library to generate the interface for the actor. */
   idlFactory: IDL.InterfaceFactory;
