@@ -1,8 +1,24 @@
 {
   "name": "ic-use-actor",
   "version": "0.0.1",
-  "description": "",
+  "description": "React Hook and context provider to make interacting with Internet Computer canisters more fun!",
+  "author": "kKristofer Lund <kristofer@kristoferlund.se>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kristoferlund/ic-use-actor"
+  },
+  "bugs": "https://github.com/kristoferlund/ic-use-actor/issues",
+  "homepage": "https://github.com/kristoferlund/ic-use-actor",
+  "keywords": [
+    "dfinity",
+    "ic",
+    "internet computer",
+    "react",
+    "hook",
+    "actor"
+  ],
   "type": "module",
+  "license": "MIT",
   "main": "dist/index.jsx",
   "scripts": {
     "clean": "rm -rf dist",
@@ -13,9 +29,6 @@
     "dev:tsc": "tsc --watch --preserveWatchOutput",
     "dev:esbuild": "npm run build --watch"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "peerDependencies": {
     "@dfinity/agent": ">=0.20.0",
     "@dfinity/identity": ">=0.20.0",
