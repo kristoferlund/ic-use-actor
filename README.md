@@ -1,6 +1,6 @@
 # ic-use-actor
 
-A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and request/response interceptors.
+A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and request/response interceptors. `ic-use-actor` makes interacting with Internet Computer canisters more fun!
 
 ## Features
 
@@ -12,13 +12,25 @@ A React context provider for managing Internet Computer (IC) actors with enhance
 
 `ic-use-actor` needs an Internet Computer (IC) identity to work. The examples below uses `ic-use-siwe-identity` as an identity provider. You can use any other identity provider as long as it returns a valid IC identity.
 
+## Installation
+
+In addition to `ic-use-actor`, the following packages are required:
+
+- `@dfinity/agent`
+- `@dfinity/identity`
+- `@dfinity/candid`
+
+```bash
+npm install ic-use-actor @dfinity/agent @dfinity/identity @dfinity/candid
+```
+
 ## Usage
 
 To use `ic-use-actor` in your React application, follow these steps:
 
-### Setting Up the Actor Context and Hook
+### 1. Setting Up the Actor Context and Hook
 
-First, create an actor context and a corresponding hook for your IC service. The hook is exported and used in your components to access the actor.
+First, create an actor context and a corresponding hook for each IC canister you would like to access. Export the hook to be able to use it in your components. The hook returned by `createUseActorHook` can be named anything you want. If using `ic-use-actor` with multiple canisters, you might want to name the hook after the canister to make it easier to identify which hook is for which canister - for example, `useMyCanister`, `useMyOtherCanister`, etc.
 
 ```jsx
 import {
@@ -31,9 +43,9 @@ const actorContext = createActorContext<_SERVICE>();
 export const useActor = createUseActorHook<_SERVICE>(actorContext);
 ```
 
-### Creating an Actor Provider Component
+### 2. Creating an Actor Provider Component
 
-Create one or more ActorProvider components to provide access to your canisters. ActorProviders can be nested to provide access to different canisters.
+Create one or more ActorProvider components to provide access to your canisters. ActorProviders can be nested to provide access to multiple canisters.
 
 ```jsx
 // Actors.tsx
@@ -70,9 +82,9 @@ export default function Actors({ children }: { children: ReactNode }) {
 }
 ```
 
-### Wrapping Your Application
+### 3. Wrapping Your Application
 
-Wrap your application's root component with ActorProvider to provide all your components with access to the actor.
+Wrap your application root component with the ActorProvider component(s) you created in the previous step to provide access to your canisters.
 
 ```jsx
 // App.tsx
@@ -88,7 +100,7 @@ function App() {
 }
 ```
 
-### Accessing the Actor in Components
+### 4. Accessing the Actor in Components
 
 In your components, use the useActor hook to access the actor:
 
@@ -113,6 +125,8 @@ function AnyComponent() {
   }, []);
 }
 ```
+
+## Advanced Usage
 
 ### Setting up interceptors
 
