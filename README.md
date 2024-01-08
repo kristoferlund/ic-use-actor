@@ -174,10 +174,10 @@ export default function Actor({ children }: { children: ReactNode }) {
 }
 ```
 
-### Contributing
+## Contributing
 
 Contributions are welcome. Please submit your pull requests or open issues to propose changes or report bugs.
 
-### License
+## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
