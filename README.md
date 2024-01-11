@@ -11,6 +11,20 @@ A React context provider for managing Internet Computer (IC) actors with enhance
 - **Typescript Support**: Makes full use of the canister service definitions to provide type safety for requests and responses.
 - **Interceptors**: `onRequest`, `onResponse`, `onRequestError`, and `onResponseError` callbacks allow for intercepting and processing requests and responses.
 
+## Table of Contents
+
+- [Pre-requisites](#pre-requisites)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [1. Setting Up the Actor Context and Hook](#1-setting-up-the-actor-context-and-hook)
+  - [2. Creating an Actor Provider Component](#2-creating-an-actor-provider-component)
+  - [3. Wrapping Your Application](#3-wrapping-your-application)
+  - [4. Accessing the Actor in Components](#4-accessing-the-actor-in-components)
+- [Advanced Usage](#advanced-usage)
+  - [Setting up interceptors](#setting-up-interceptors)
+- [Updates](#updates)
+- [Contributing](#contributing)
+
 ## Pre-requisites
 
 `ic-use-actor` needs an Internet Computer (IC) identity to work. The examples below uses `ic-use-siwe-identity` as an identity provider. You can use any other identity provider as long as it returns a valid IC identity.
