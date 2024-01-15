@@ -22,7 +22,12 @@ import type {
 } from "./interceptor-data.type";
 
 /**
- *
+ * Re-export types
+ */
+export * from "./interceptor-data.type";
+
+/**
+ * The ActorContextType type represents the type of the React context that will be used to pass the actor down the component tree.
  */
 export type ActorContextType<T> = {
   actor?: ActorSubclass<T>;
