@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2024-01-15
+
+### Changed
+
+- Re-export types for nicer looking imports in consuming apps.
+- Minify the bundle.
+
 ## [0.0.2] - 2024-01-08
 
 ### Fixed
