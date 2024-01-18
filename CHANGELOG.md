@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2024-01-18
+
+### Added
+
+- `isAgentHTTPResponseError` - Type guard that returns true if the error is an instance of the AgentHTTPResponseError class.
+- `isIdentityExpiredError` - Helper function to check if an error is an expired identity error. Returns true if the users identity has expired. The user will need to sign in again to get a new identity.
+
 ## [0.0.3] - 2024-01-15
 
 ### Changed
