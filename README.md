@@ -31,14 +31,8 @@ A React context provider for managing Internet Computer (IC) actors with enhance
 
 ## Installation
 
-In addition to `ic-use-actor`, the following packages are required:
-
-- `@dfinity/agent`
-- `@dfinity/identity`
-- `@dfinity/candid`
-
 ```bash
-npm install ic-use-actor @dfinity/agent @dfinity/identity @dfinity/candid
+npm install ic-use-actor
 ```
 
 ## Usage
