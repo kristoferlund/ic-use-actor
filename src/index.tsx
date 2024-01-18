@@ -54,7 +54,7 @@ export function createActorContext<T>() {
 export class AgentHTTPResponseError extends Error {
   constructor(message: string, public readonly response: HttpDetailsResponse) {
     super(message);
-    this.name = this.constructor.name;
+    this.name = "AgentHTTPResponseError";
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
@@ -65,7 +65,7 @@ export class AgentHTTPResponseError extends Error {
 export function isAgentHTTPResponseError(
   error: unknown
 ): error is AgentHTTPResponseError {
-  return error instanceof Error && error.name === AgentHTTPResponseError.name;
+  return error instanceof Error && error.name === "AgentHTTPResponseError";
 }
 
 /**
