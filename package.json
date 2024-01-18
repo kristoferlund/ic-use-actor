@@ -19,7 +19,7 @@
   ],
   "type": "module",
   "license": "MIT",
-  "main": "dist/index.jsx",
+  "main": "dist/index.js",
   "scripts": {
     "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -29,16 +29,14 @@
     "dev:tsc": "tsc --watch --preserveWatchOutput",
     "dev:esbuild": "npm run build --watch"
   },
-  "peerDependencies": {
+  "dependencies": {
     "@dfinity/agent": ">=0.20.0",
-    "@dfinity/candid": ">=0.20.0",
-    "@dfinity/identity": ">=0.20.0",
+    "@dfinity/candid": ">=0.20.0"
+  },
+  "peerDependencies": {
     "react": ">=18.0.0"
   },
   "devDependencies": {
-    "@dfinity/agent": "^0.20.2",
-    "@dfinity/candid": "^0.20.2",
-    "@dfinity/identity": "^0.20.2",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.39",
     "esbuild": "^0.19.5",
