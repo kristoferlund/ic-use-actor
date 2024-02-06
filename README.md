@@ -2,8 +2,9 @@
 
 A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and request/response interceptors. `ic-use-actor` makes interacting with Internet Computer canisters more fun!
 
-![npm](https://img.shields.io/npm/v/ic-use-actor)
-![npm](https://img.shields.io/npm/dw/ic-use-actor)
+[![version][version-image]][npm-link]
+[![downloads][dl-image]][npm-link]
+
 
 ## Features
 
@@ -13,17 +14,21 @@ A React context provider for managing Internet Computer (IC) actors with enhance
 
 ## Table of Contents
 
-- [Pre-requisites](#pre-requisites)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [1. Setting Up the Actor Context and Hook](#1-setting-up-the-actor-context-and-hook)
-  - [2. Creating an Actor Provider Component](#2-creating-an-actor-provider-component)
-  - [3. Wrapping Your Application](#3-wrapping-your-application)
-  - [4. Accessing the Actor in Components](#4-accessing-the-actor-in-components)
-- [Advanced Usage](#advanced-usage)
-  - [Setting up interceptors](#setting-up-interceptors)
-- [Updates](#updates)
-- [Contributing](#contributing)
+- [ic-use-actor](#ic-use-actor)
+  - [Features](#features)
+  - [Table of Contents](#table-of-contents)
+  - [Pre-requisites](#pre-requisites)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [1. Setting Up the Actor Context and Hook](#1-setting-up-the-actor-context-and-hook)
+    - [2. Creating an Actor Provider Component](#2-creating-an-actor-provider-component)
+    - [3. Wrapping Your Application](#3-wrapping-your-application)
+    - [4. Accessing the Actor in Components](#4-accessing-the-actor-in-components)
+  - [Advanced Usage](#advanced-usage)
+    - [Setting up interceptors](#setting-up-interceptors)
+  - [Updates](#updates)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Pre-requisites
 
@@ -193,3 +198,8 @@ Contributions are welcome. Please submit your pull requests or open issues to pr
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+[version-image]: https://img.shields.io/npm/v/ic-use-actor
+[dl-image]: https://img.shields.io/npm/dw/ic-use-actor
+[npm-link]: https://www.npmjs.com/package/ic-use-actor
+
