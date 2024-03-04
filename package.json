@@ -1,6 +1,6 @@
 {
   "name": "ic-use-actor",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "React Hook and context provider to make interacting with Internet Computer canisters more fun!",
   "author": "Kristofer Lund <kristofer@kristoferlund.se>",
   "repository": {
@@ -30,8 +30,8 @@
     "dev:esbuild": "npm run build --watch"
   },
   "dependencies": {
-    "@dfinity/agent": ">=0.20.0",
-    "@dfinity/candid": ">=0.20.0"
+    "@dfinity/agent": "^1.0.1",
+    "@dfinity/candid": "^1.0.1"
   },
   "peerDependencies": {
     "react": ">=18.0.0"
