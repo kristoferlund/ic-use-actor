@@ -29,12 +29,10 @@
     "dev:tsc": "tsc --watch --preserveWatchOutput",
     "dev:esbuild": "npm run build --watch"
   },
-  "dependencies": {
-    "@dfinity/agent": "^1.0.1",
-    "@dfinity/candid": "^1.0.1"
-  },
   "peerDependencies": {
-    "react": ">=18.0.0"
+    "react": ">=18.0.0",
+    "@dfinity/agent": ">=1.0.1",
+    "@dfinity/candid": ">=1.0.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",
