@@ -45,7 +45,7 @@ export type ActorContextType<T> = {
  * ```
  */
 export function createActorContext<T>() {
-  return createContext<ActorContextType<T> | undefined>(undefined);
+  return createContext<ActorContextType<T>>({ actor: undefined });
 }
 
 /**
@@ -91,9 +91,7 @@ export function isIdentityExpiredError(error: unknown) {
  * export const useActor = createUseActorHook<_SERVICE>(actorContext);
  * ```
  */
-export function createUseActorHook<T>(
-  context: Context<ActorContextType<T> | undefined>
-) {
+export function createUseActorHook<T>(context: Context<ActorContextType<T>>) {
   return function useActor() {
     const actorContext = useContext(context);
     if (!actorContext) {
@@ -161,7 +159,7 @@ export function ActorProvider<T>({
   actorOptions?: ActorConfig;
 
   /** The React context to which the actor will be provided. This context will be used to pass the actor down the component tree. */
-  context: React.Context<ActorContextType<T> | undefined>;
+  context: React.Context<ActorContextType<T>>;
 
   /** The identity used for signing requests. */
   identity?: Identity;

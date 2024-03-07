@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+- Don't allow the actor context to be undefined as this can lead to unpredictable behaviour.
+
 ## [0.0.8] - 2024-03-04
 
 ### Changed
