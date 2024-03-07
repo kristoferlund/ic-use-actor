@@ -37,7 +37,7 @@ A React context provider for managing Internet Computer (IC) actors with enhance
 ## Installation
 
 ```bash
-npm install ic-use-actor
+npm install ic-use-actor @dfinity/agent @dfinity/candid
 ```
 
 ## Usage
