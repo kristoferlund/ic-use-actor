@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.10] - 2024-07-11
+
+### Changed
+- Upgraded minimum required versions of @dfinity/xxx dependencies
+
 ## [0.0.9] - 2024-03-07
 
 ### Changed

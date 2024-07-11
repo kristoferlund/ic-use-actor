@@ -191,6 +191,13 @@ export default function Actor({ children }: { children: ReactNode }) {
 
 See the [CHANGELOG](CHANGELOG.md) for details on updates.
 
+## Author
+
+- [kristofer@kristoferlund.se](mailto:kristofer@kristoferlund.se)
+- Twitter: [@kristoferlund](https://twitter.com/kristoferlund)
+- Discord: kristoferkristofer
+- Telegram: [@kristoferkristofer](https://t.me/kristoferkristofer)
+
 ## Contributing
 
 Contributions are welcome. Please submit your pull requests or open issues to propose changes or report bugs.
@@ -202,4 +209,3 @@ This project is licensed under the MIT License. See the LICENSE file for more de
 [version-image]: https://img.shields.io/npm/v/ic-use-actor
 [dl-image]: https://img.shields.io/npm/dw/ic-use-actor
 [npm-link]: https://www.npmjs.com/package/ic-use-actor
-
