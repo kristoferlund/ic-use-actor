@@ -7,22 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.1.0 - 2024-10-16
+
+### Changed
+
+- Upgraded minimum required versions of @dfinity/xxx dependencies to >=v2.1.2
+
 ## [0.0.10] - 2024-07-11
 
 ### Changed
+
 - Upgraded minimum required versions of @dfinity/xxx dependencies
 
 ## [0.0.9] - 2024-03-07
 
 ### Changed
+
 - Moved @dfinity/xxx dependencies from dependencies to peerDependencies to reduce package size.
 
 ## Fixed
+
 - Don't allow the actor context to be undefined as this can lead to unpredictable behaviour.
 
 ## [0.0.8] - 2024-03-04
 
 ### Changed
+
 - Upgraded @dfinity/xxx dependencies to latest versions.
 
 ## [0.0.7] - 2024-01-31
