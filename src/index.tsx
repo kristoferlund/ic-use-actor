@@ -236,24 +236,13 @@ export function ActorProvider<T>({
 
     (async () => {
       if (!identity || !idlFactory || !canisterId || !context) return;
-
-      const agent = new HttpAgent({ identity, ...httpAgentOptions });
-
-      if (process.env.DFX_NETWORK !== "ic") {
-        agent.fetchRootKey().catch((err) => {
-          console.warn(
-            "Unable to fetch root key. Check to ensure that your local replica is running"
-          );
-          console.error(err);
-        });
-      }
-
+      const shouldFetchRootKey = process.env.DFX_NETWORK !== 'ic';
+      const agent = await HttpAgent.create({ identity, ...httpAgentOptions, shouldFetchRootKey });
       const _actor = Actor.createActor<typeof context>(idlFactory, {
         agent,
         canisterId,
         ...actorOptions,
       });
-
       setActor(createInterceptorProxy(_actor));
     })();
   }, [
