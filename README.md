@@ -48,7 +48,7 @@ To use `ic-use-actor` in your React application, follow these steps:
 
 First, create an actor context and a corresponding hook for each IC canister you would like to access. Export the hook to be able to use it in your components. The hook returned by `createUseActorHook` can be named anything you want. If using `ic-use-actor` with multiple canisters, you might want to name the hook after the canister to make it easier to identify which hook is for which canister - for example, `useMyCanister`, `useMyOtherCanister`, etc.
 
-```jsx
+```tsx
 import {
   createActorContext,
   createUseActorHook,
@@ -63,7 +63,7 @@ export const useActor = createUseActorHook<_SERVICE>(actorContext);
 
 Create one or more ActorProvider components to provide access to your canisters. ActorProviders can be nested to provide access to multiple canisters.
 
-```jsx
+```tsx
 // Actors.tsx
 
 import { ReactNode } from "react";
@@ -102,7 +102,7 @@ export default function Actors({ children }: { children: ReactNode }) {
 
 Wrap your application root component with the ActorProvider component(s) you created in the previous step to provide access to your canisters.
 
-```jsx
+```tsx
 // App.tsx
 
 import Actors from "./Actors";
@@ -120,9 +120,10 @@ function App() {
 
 In your components, use the useActor hook to access the actor:
 
-```jsx
+```tsx
 // AnyComponent.tsx
 
+import React from "react";
 import { useActor } from "path-to/useActor";
 
 function AnyComponent() {
@@ -130,6 +131,8 @@ function AnyComponent() {
 
   // Use the actor for calling methods on your canister
   React.useEffect(() => {
+    if (!actor) return;
+
     actor
       .my_method()
       .then((result) => {
@@ -138,7 +141,7 @@ function AnyComponent() {
       .catch((error) => {
         // Handle the error
       });
-  }, []);
+  }, [actor]);
 }
 ```
 
@@ -148,25 +151,44 @@ function AnyComponent() {
 
 Interceptors can be used to intercept requests and responses. You can use them to modify requests, log requests and responses, or perform other actions.
 
-```jsx
+```tsx
+import { ReactNode } from "react";
+import {
+  ActorProvider,
+  InterceptorRequestData,
+  InterceptorResponseData,
+  InterceptorErrorData,
+} from "ic-use-actor";
+import { _SERVICE } from "path-to/your-service.did";
+
 export default function Actor({ children }: { children: ReactNode }) {
   const { identity } = useSiweIdentity();
 
   const handleRequest = (data: InterceptorRequestData) => {
-    // Do something
-    // data: { args: unknown[], methodName: string }
+    // Log or modify the request
+    console.log(`Calling ${data.methodName} with args:`, data.args);
+    // Must return the args array (potentially modified)
     return data.args;
   };
 
   const handleResponse = (data: InterceptorResponseData) => {
-    // Do something
-    // data: { args: unknown[], methodName: string, response: unknown }
+    // Log or modify the response
+    console.log(`Response from ${data.methodName}:`, data.response);
+    // Must return the response (potentially modified)
     return data.response;
   };
 
-  const handleError = (data: InterceptorErrorData) => {
-    // Do something
-    // data: { args: unknown[], methodName: string, error: unknown }
+  const handleRequestError = (data: InterceptorErrorData) => {
+    // Handle request errors (TypeError)
+    console.error(`Request error in ${data.methodName}:`, data.error);
+    // Must return the error (potentially modified)
+    return data.error;
+  };
+
+  const handleResponseError = (data: InterceptorErrorData) => {
+    // Handle response errors
+    console.error(`Response error in ${data.methodName}:`, data.error);
+    // Must return the error (potentially modified)
     return data.error;
   };
 
@@ -177,14 +199,37 @@ export default function Actor({ children }: { children: ReactNode }) {
       identity={identity}
       idlFactory={idlFactory}
       onRequest={handleRequest}
-      onRequestError={handleError}
+      onRequestError={handleRequestError}
       onResponse={handleResponse}
-      onResponseError={handleError}
+      onResponseError={handleResponseError}
     >
       {children}
     </ActorProvider>
   );
 }
+```
+## API Reference
+
+### Optional Props
+
+The `ActorProvider` component also accepts these optional props:
+
+- `httpAgentOptions?: HttpAgentOptions` - Options for configuring the HTTP agent
+- `actorOptions?: ActorConfig` - Configuration for customizing the Actor behavior
+
+```tsx
+<ActorProvider<_SERVICE>
+  // ... required props
+  httpAgentOptions={{
+    host: "https://ic0.app",
+    // other HttpAgent options
+  }}
+  actorOptions={{
+    // Actor configuration options
+  }}
+>
+  {children}
+</ActorProvider>
 ```
 
 ## Updates
