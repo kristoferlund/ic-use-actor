@@ -5,7 +5,6 @@ import {
   HttpAgent,
   type HttpAgentOptions,
   type Identity,
-  type HttpDetailsResponse,
 } from "@dfinity/agent";
 
 import {
@@ -46,42 +45,6 @@ export type ActorContextType<T> = {
  */
 export function createActorContext<T>() {
   return createContext<ActorContextType<T>>({ actor: undefined });
-}
-
-/**
- * Custom error class for HTTP response errors from the agent.
- */
-export class AgentHTTPResponseError extends Error {
-  constructor(
-    message: string,
-    public readonly response: HttpDetailsResponse,
-  ) {
-    super(message);
-    this.name = "AgentHTTPResponseError";
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-}
-
-/**
- * Type guard that returns true if the error is an instance of the AgentHTTPResponseError class.
- */
-export function isAgentHTTPResponseError(
-  error: unknown,
-): error is AgentHTTPResponseError {
-  return error instanceof Error && error.name === "AgentHTTPResponseError";
-}
-
-/**
- * Returns true if the user's identity has expired. The user will need to sign in again to get a new identity.
- */
-export function isIdentityExpiredError(error: unknown) {
-  if (!isAgentHTTPResponseError(error)) return false;
-  if (error.response.status === 400) {
-    if (error.message.includes("Specified sender delegation has expired")) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /**
