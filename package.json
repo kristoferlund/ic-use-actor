@@ -29,12 +29,17 @@
     "dev:tsc": "tsc --watch --preserveWatchOutput",
     "dev:esbuild": "pnpm run build --watch"
   },
+  "dependencies": {
+    "@xstate/store": "^2.6.2"
+  },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "@dfinity/agent": ">=2.1.2",
-    "@dfinity/candid": ">=2.1.2"
+    "@dfinity/agent": ">=3.1.0",
+    "@dfinity/candid": ">=3.1.0"
   },
   "devDependencies": {
+    "@dfinity/agent": "^3.1.0",
+    "@dfinity/candid": "^3.1.0",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.39",
     "esbuild": "^0.19.5",
