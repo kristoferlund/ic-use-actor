@@ -49,10 +49,13 @@ export function createActorContext<T>() {
 }
 
 /**
- * Re-export of the HttpAgentOptions type from the dfinity/agent package as it is not exported there.
+ * Custom error class for HTTP response errors from the agent.
  */
 export class AgentHTTPResponseError extends Error {
-  constructor(message: string, public readonly response: HttpDetailsResponse) {
+  constructor(
+    message: string,
+    public readonly response: HttpDetailsResponse,
+  ) {
     super(message);
     this.name = "AgentHTTPResponseError";
     Object.setPrototypeOf(this, new.target.prototype);
@@ -63,13 +66,13 @@ export class AgentHTTPResponseError extends Error {
  * Type guard that returns true if the error is an instance of the AgentHTTPResponseError class.
  */
 export function isAgentHTTPResponseError(
-  error: unknown
+  error: unknown,
 ): error is AgentHTTPResponseError {
   return error instanceof Error && error.name === "AgentHTTPResponseError";
 }
 
 /**
- * Returns true if the users identity has expired. The user will need to sign in again to get a new identity.
+ * Returns true if the user's identity has expired. The user will need to sign in again to get a new identity.
  */
 export function isIdentityExpiredError(error: unknown) {
   if (!isAgentHTTPResponseError(error)) return false;
@@ -114,7 +117,7 @@ export function createUseActorHook<T>(context: Context<ActorContextType<T>>) {
  *   createUseActorHook,
  * } from "ic-use-actor";
  * import {
- *  canisterId,
+ *   canisterId,
  *   idlFactory,
  * } from "path-to/your-service/index";
  * import { _SERVICE } from "path-to/your-service.did";
@@ -167,29 +170,29 @@ export function ActorProvider<T>({
   /** A factory function provided by the DFINITY Candid library to generate the interface for the actor. */
   idlFactory: IDL.InterfaceFactory;
 
-  /** The unique identifier of the canister that the actor will interact with.*/
+  /** The unique identifier of the canister that the actor will interact with. */
   canisterId: string;
 
   /** The React component(s) that will be wrapped by the ActorProvider. */
   children: ReactNode;
 
-  /** Callback function that will be called before the request is sent. */
+  /** Callback function that will be called before the request is sent. Should return the modified arguments array. */
   onRequest?: (data: InterceptorRequestData) => unknown[];
 
-  /** Callback function that will be called before the response is returned. */
+  /** Callback function that will be called after a successful response is received. Should return the modified response. */
   onResponse?: (data: InterceptorResponseData) => unknown;
 
-  /** Callback function that will be called if the request fails. */
+  /** Callback function that will be called when a TypeError occurs during the request. Should return the modified error. */
   onRequestError?: (data: InterceptorErrorData) => Error | TypeError | unknown;
 
-  /** Callback function that will be called if the response fails. */
+  /** Callback function that will be called when an error occurs during the response. Should return the modified error. */
   onResponseError?: (data: InterceptorErrorData) => Error | TypeError | unknown;
 }) {
   const [actor, setActor] = useState<ActorSubclass<typeof context>>();
 
   useEffect(() => {
     function createInterceptorProxy<T>(
-      _actor: ActorSubclass<T>
+      _actor: ActorSubclass<T>,
     ): ActorSubclass<T> {
       return new Proxy(_actor, {
         get(target, prop, receiver) {
@@ -236,8 +239,12 @@ export function ActorProvider<T>({
 
     (async () => {
       if (!identity || !idlFactory || !canisterId || !context) return;
-      const shouldFetchRootKey = process.env.DFX_NETWORK !== 'ic';
-      const agent = await HttpAgent.create({ identity, ...httpAgentOptions, shouldFetchRootKey });
+      const shouldFetchRootKey = process.env.DFX_NETWORK !== "ic";
+      const agent = await HttpAgent.create({
+        identity,
+        ...httpAgentOptions,
+        shouldFetchRootKey,
+      });
       const _actor = Actor.createActor<typeof context>(idlFactory, {
         agent,
         canisterId,
