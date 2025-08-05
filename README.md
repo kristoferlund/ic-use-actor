@@ -26,7 +26,11 @@ A React context provider for managing Internet Computer (IC) actors with enhance
     - [4. Accessing the Actor in Components](#4-accessing-the-actor-in-components)
   - [Advanced Usage](#advanced-usage)
     - [Setting up interceptors](#setting-up-interceptors)
+  - [Error Handling](#error-handling)
+  - [API Reference](#api-reference)
+    - [Optional Props](#optional-props)
   - [Updates](#updates)
+  - [Author](#author)
   - [Contributing](#contributing)
   - [License](#license)
 
