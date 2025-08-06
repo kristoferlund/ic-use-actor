@@ -29,6 +29,9 @@
     "dev:tsc": "tsc --watch --preserveWatchOutput",
     "dev:esbuild": "pnpm run build --watch"
   },
+  "dependencies": {
+    "@xstate/store": "^3.8.5"
+  },
   "peerDependencies": {
     "react": ">=18.0.0",
     "@dfinity/agent": ">=3.1.0",

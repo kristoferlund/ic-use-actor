@@ -1,260 +1,560 @@
 # ic-use-actor
 
-A React context provider for managing Internet Computer (IC) actors with enhanced features like type safety and request/response interceptors. `ic-use-actor` makes interacting with Internet Computer canisters more fun!
+A React hook library for interacting with Internet Computer (IC) canisters. `ic-use-actor` provides a simple, type-safe way to interact with IC actors using XState stores for state management.
 
 [![version][version-image]][npm-link]
 [![downloads][dl-image]][npm-link]
 
-
 ## Features
 
-- **Shared Actor Context**: Allows the same actor to be used across multiple components.
-- **Typescript Support**: Makes full use of the canister service definitions to provide type safety for requests and responses.
-- **Interceptors**: `onRequest`, `onResponse`, `onRequestError`, and `onResponseError` callbacks allow for intercepting and processing requests and responses.
+- **Simple API**: Just one function call to create a typed hook for your canister
+- **No Provider Hell**: No need for React Context or Provider components
+- **Type Safety**: Full TypeScript support with canister service definitions
+- **Request/Response Interceptors**: Process requests and responses with customizable callbacks
+- **Global State Management**: Powered by XState stores for predictable state management
+- **Multiple Canisters**: Easy to work with multiple canisters without nesting providers
 
 ## Table of Contents
 
 - [ic-use-actor](#ic-use-actor)
   - [Features](#features)
   - [Table of Contents](#table-of-contents)
-  - [Pre-requisites](#pre-requisites)
   - [Installation](#installation)
+  - [Quick Start](#quick-start)
   - [Usage](#usage)
-    - [1. Setting Up the Actor Context and Hook](#1-setting-up-the-actor-context-and-hook)
-    - [2. Creating an Actor Provider Component](#2-creating-an-actor-provider-component)
-    - [3. Wrapping Your Application](#3-wrapping-your-application)
-    - [4. Accessing the Actor in Components](#4-accessing-the-actor-in-components)
+    - [Basic Setup](#basic-setup)
+    - [Using in Components](#using-in-components)
+    - [Multiple Canisters](#multiple-canisters)
+    - [Auto-initialization](#auto-initialization)
   - [Advanced Usage](#advanced-usage)
-    - [Setting up interceptors](#setting-up-interceptors)
-  - [Error Handling](#error-handling)
+    - [Interceptors](#interceptors)
+    - [Error Handling](#error-handling)
+    - [Custom HTTP Agent Options](#custom-http-agent-options)
   - [API Reference](#api-reference)
-    - [Optional Props](#optional-props)
-  - [Updates](#updates)
+    - [createActorStore](#createactorstore)
+    - [createAutoInitActorStore](#createautoinitactorstore)
+    - [Hook Return Value](#hook-return-value)
+  - [Migration from v0.1.x](#migration-from-v01x)
+  - [Examples](#examples)
   - [Author](#author)
   - [Contributing](#contributing)
   - [License](#license)
 
-## Pre-requisites
-
-`ic-use-actor` needs an Internet Computer (IC) identity to work. The examples below uses `ic-use-siwe-identity` as an identity provider. You can use any other identity provider as long as it returns a valid IC identity.
-
 ## Installation
 
 ```bash
-npm install ic-use-actor @dfinity/agent @dfinity/candid
+npm install ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
+```
+
+or
+
+```bash
+yarn add ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
+```
+
+or
+
+```bash
+pnpm add ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
+```
+
+## Quick Start
+
+```tsx
+// 1. Create your actor hook
+import { createActorStore } from "ic-use-actor";
+import { canisterId, idlFactory } from "./declarations/backend";
+import { _SERVICE } from "./declarations/backend/backend.did";
+
+export const useBackendActor = createActorStore<_SERVICE>({
+  canisterId,
+  idlFactory,
+});
+
+// 2. Use it in your components
+function MyComponent() {
+  const { actor, authenticate, setInterceptors, isAuthenticated, isInitializing, error } = useBackendActor();
+  const { identity, clear } = useSiweIdentity(); // or any identity provider
+  
+  useEffect(() => {
+    // Set up interceptors once
+    setInterceptors({
+      onResponseError: (data) => {
+        if (data.error.message?.includes("delegation expired")) {
+          clear(); // Clear identity from React hook
+        }
+        return data.error;
+      }
+    });
+  }, [setInterceptors, clear]);
+  
+  useEffect(() => {
+    if (identity) {
+      authenticate(identity);
+    }
+  }, [identity, authenticate]);
+  
+  const handleClick = async () => {
+    if (!actor) return;
+    const result = await actor.myMethod();
+    console.log(result);
+  };
+  
+  if (error) return <div>Error: {error.message}</div>;
+  if (isInitializing) return <div>Loading...</div>;
+  if (!isAuthenticated) return <div>Please sign in</div>;
+  
+  return <button onClick={handleClick}>Call Canister</button>;
+}
+
+// 3. That's it! No providers needed in your App
+function App() {
+  return <MyComponent />;
+}
 ```
 
 ## Usage
 
-To use `ic-use-actor` in your React application, follow these steps:
+### Basic Setup
 
-### 1. Setting Up the Actor Context and Hook
-
-First, create an actor context and a corresponding hook for each IC canister you would like to access. Export the hook to be able to use it in your components. The hook returned by `createUseActorHook` can be named anything you want. If using `ic-use-actor` with multiple canisters, you might want to name the hook after the canister to make it easier to identify which hook is for which canister - for example, `useMyCanister`, `useMyOtherCanister`, etc.
+Create a hook for your canister by calling `createActorStore` with your canister's configuration:
 
 ```tsx
-import {
-  createActorContext,
-  createUseActorHook,
-} from "ic-use-actor";
-import { _SERVICE } from "path-to/your-service.did";
+// actors.ts
+import { createActorStore } from "ic-use-actor";
+import { canisterId, idlFactory } from "./declarations/backend";
+import { _SERVICE } from "./declarations/backend/backend.did";
 
-const actorContext = createActorContext<_SERVICE>();
-export const useActor = createUseActorHook<_SERVICE>(actorContext);
-```
-
-### 2. Creating an Actor Provider Component
-
-Create one or more ActorProvider components to provide access to your canisters. ActorProviders can be nested to provide access to multiple canisters.
-
-```tsx
-// Actors.tsx
-
-import { ReactNode } from "react";
-import {
-  ActorProvider,
-  createActorContext,
-  createUseActorHook,
-} from "ic-use-actor";
-import {
+export const useBackendActor = createActorStore<_SERVICE>({
   canisterId,
   idlFactory,
-} from "path-to/your-service/index";
-import { _SERVICE } from "path-to/your-service.did";
-import { useSiweIdentity } from "ic-use-siwe-identity";
-
-const actorContext = createActorContext<_SERVICE>();
-export const useActor = createUseActorHook<_SERVICE>(actorContext);
-
-export default function Actors({ children }: { children: ReactNode }) {
-  const { identity } = useSiweIdentity();
-
-  return (
-    <ActorProvider<_SERVICE>
-      canisterId={canisterId}
-      context={actorContext}
-      identity={identity}
-      idlFactory={idlFactory}
-    >
-      {children}
-    </ActorProvider>
-  );
-}
+});
 ```
 
-### 3. Wrapping Your Application
+### Using in Components
 
-Wrap your application root component with the ActorProvider component(s) you created in the previous step to provide access to your canisters.
-
-```tsx
-// App.tsx
-
-import Actors from "./Actors";
-
-function App() {
-  return (
-    <Actors>
-      <MyApplication />
-    </Actors>
-  );
-}
-```
-
-### 4. Accessing the Actor in Components
-
-In your components, use the useActor hook to access the actor:
+The hook returns an object with the actor instance and several utility functions:
 
 ```tsx
-// AnyComponent.tsx
-
-import React from "react";
-import { useActor } from "path-to/useActor";
-
-function AnyComponent() {
-  const { actor } = useActor();
-
-  // Use the actor for calling methods on your canister
-  React.useEffect(() => {
+function MyComponent() {
+  const { 
+    actor,           // The actor instance (initialized with anonymous agent by default)
+    authenticate,    // Function to authenticate the actor with an identity
+    setInterceptors, // Function to set up interceptors
+    isAuthenticated, // Boolean indicating if actor is authenticated
+    isInitializing,  // Boolean indicating if actor is being initialized
+    error,          // Any error that occurred during initialization
+    reset,          // Function to reset the actor state
+    clearError      // Function to clear error state
+  } = useBackendActor();
+  
+  const { identity, clear } = useSiweIdentity();
+  
+  // Set up interceptors once
+  useEffect(() => {
+    setInterceptors({
+      onRequest: (data) => {
+        console.log(`Calling ${data.methodName}`, data.args);
+        return data.args;
+      },
+      onResponseError: (data) => {
+        // Access React hooks in interceptors
+        if (data.error.message?.includes("delegation expired")) {
+          clear(); // Clear identity when expired
+        }
+        return data.error;
+      }
+    });
+  }, [setInterceptors, clear]);
+  
+  // Authenticate when identity is available
+  useEffect(() => {
+    if (identity) {
+      authenticate(identity);
+    }
+  }, [identity, authenticate]);
+  
+  // Use the actor (works with anonymous or authenticated)
+  const fetchData = async () => {
     if (!actor) return;
+    
+    try {
+      const data = await actor.getData();
+      console.log(data);
+    } catch (err) {
+      console.error("Failed to fetch data:", err);
+    }
+  };
+  
+  return (
+    <div>
+      {error && <div>Error: {error.message}</div>}
+      {isInitializing && <div>Initializing...</div>}
+      <button onClick={fetchData} disabled={!actor}>Fetch Data</button>
+      {isAuthenticated && <span>Authenticated</span>}
+    </div>
+  );
+}
+```
 
-    actor
-      .my_method()
-      .then((result) => {
-        // Do something with the result
-      })
-      .catch((error) => {
-        // Handle the error
-      });
-  }, [actor]);
+### Multiple Canisters
+
+Working with multiple canisters is straightforward - just create a hook for each:
+
+```tsx
+// actors.ts
+export const useBackendActor = createActorStore<BackendService>({
+  canisterId: backendCanisterId,
+  idlFactory: backendIdlFactory,
+});
+
+export const useNFTActor = createActorStore<NFTService>({
+  canisterId: nftCanisterId,
+  idlFactory: nftIdlFactory,
+});
+
+export const useTokenActor = createActorStore<TokenService>({
+  canisterId: tokenCanisterId,
+  idlFactory: tokenIdlFactory,
+});
+
+// Component using multiple actors
+function MultiCanisterComponent() {
+  const { identity } = useSiweIdentity();
+  const backend = useBackendActor();
+  const nft = useNFTActor();
+  const token = useTokenActor();
+  
+  useEffect(() => {
+    if (identity) {
+      backend.authenticate(identity);
+      nft.authenticate(identity);
+      token.authenticate(identity);
+    }
+  }, [identity]);
+  
+  // Use the actors...
+}
+```
+
+### Auto-initialization
+
+If you have a global identity store, you can use `createAutoInitActorStore` for automatic initialization:
+
+```tsx
+// actors.ts
+import { createAutoInitActorStore } from "ic-use-actor";
+import { identityStore } from "./stores/identity";
+
+export const useBackendActor = createAutoInitActorStore<_SERVICE>({
+  canisterId,
+  idlFactory,
+  getIdentity: () => identityStore.getState().identity,
+  getInterceptors: () => ({
+    onResponseError: (data) => {
+      if (data.error.message?.includes("delegation expired")) {
+        identityStore.clear();
+      }
+      return data.error;
+    }
+  })
+});
+
+// Component - no manual initialization needed!
+function MyComponent() {
+  const { actor, isInitializing } = useBackendActor();
+  
+  if (isInitializing) return <div>Loading...</div>;
+  if (!actor) return <div>Please sign in</div>;
+  
+  return <button onClick={() => actor.myMethod()}>Call Method</button>;
 }
 ```
 
 ## Advanced Usage
 
-### Setting up interceptors
+### Interceptors
 
-Interceptors can be used to intercept requests and responses. You can use them to modify requests, log requests and responses, or perform other actions.
+Add request/response interceptors to process or log interactions with your canister. Interceptors are provided when initializing the actor, allowing them to access React context and hooks:
 
 ```tsx
-import { ReactNode } from "react";
-import {
-  ActorProvider,
-  InterceptorRequestData,
-  InterceptorResponseData,
-  InterceptorErrorData,
-} from "ic-use-actor";
-import { _SERVICE } from "path-to/your-service.did";
-
-export default function Actor({ children }: { children: ReactNode }) {
-  const { identity } = useSiweIdentity();
-
-  const handleRequest = (data: InterceptorRequestData) => {
-    // Log or modify the request
-    console.log(`Calling ${data.methodName} with args:`, data.args);
-    // Must return the args array (potentially modified)
-    return data.args;
-  };
-
-  const handleResponse = (data: InterceptorResponseData) => {
-    // Log or modify the response
-    console.log(`Response from ${data.methodName}:`, data.response);
-    // Must return the response (potentially modified)
-    return data.response;
-  };
-
-  const handleRequestError = (data: InterceptorErrorData) => {
-    // Handle request errors (TypeError)
-    console.error(`Request error in ${data.methodName}:`, data.error);
-    // Must return the error (potentially modified)
-    return data.error;
-  };
-
-  const handleResponseError = (data: InterceptorErrorData) => {
-    // Handle response errors
-    console.error(`Response error in ${data.methodName}:`, data.error);
-    // Must return the error (potentially modified)
-    return data.error;
-  };
-
-  return (
-    <ActorProvider<_SERVICE>
-      canisterId={canisterId}
-      context={actorContext}
-      identity={identity}
-      idlFactory={idlFactory}
-      onRequest={handleRequest}
-      onRequestError={handleRequestError}
-      onResponse={handleResponse}
-      onResponseError={handleResponseError}
-    >
-      {children}
-    </ActorProvider>
-  );
+function MyComponent() {
+  const { actor, authenticate, setInterceptors } = useBackendActor();
+  const { identity, logout } = useAuthProvider();
+  const navigate = useNavigate();
+  
+  // Set up interceptors once - they can access React hooks
+  useEffect(() => {
+    setInterceptors({
+      // Called before each request
+      onRequest: (data) => {
+        console.log(`Calling ${data.methodName}`, data.args);
+        // Modify args if needed
+        return data.args;
+      },
+      
+      // Called after successful responses
+      onResponse: (data) => {
+        console.log(`Response from ${data.methodName}`, data.response);
+        // Modify response if needed
+        return data.response;
+      },
+      
+      // Called on request errors (e.g., network issues)
+      onRequestError: (data) => {
+        console.error(`Request error in ${data.methodName}`, data.error);
+        // Transform or handle error
+        return data.error;
+      },
+      
+      // Called on response errors - can access React hooks here!
+      onResponseError: (data) => {
+        console.error(`Response error in ${data.methodName}`, data.error);
+        
+        // Check for expired identity and handle it
+        if (data.error.message?.includes("delegation expired")) {
+          logout(); // Call React hook function
+          navigate('/login'); // Use React Router
+        }
+        
+        return data.error;
+      },
+    });
+  }, [setInterceptors, logout, navigate]);
+  
+  // Authenticate when identity is available
+  useEffect(() => {
+    if (identity) {
+      authenticate(identity);
+    }
+  }, [identity, authenticate]);
+  
+  // ... rest of component
 }
 ```
-## API Reference
 
-### Optional Props
+### Error Handling
 
-The `ActorProvider` component also accepts these optional props:
-
-- `httpAgentOptions?: HttpAgentOptions` - Options for configuring the HTTP agent
-- `actorOptions?: ActorConfig` - Configuration for customizing the Actor behavior
+The hook provides error state that you can use to handle initialization errors:
 
 ```tsx
-<ActorProvider<_SERVICE>
-  // ... required props
-  httpAgentOptions={{
-    host: "https://ic0.app",
-    // other HttpAgent options
-  }}
-  actorOptions={{
-    // Actor configuration options
-  }}
->
-  {children}
-</ActorProvider>
+function MyComponent() {
+  const { actor, error, clearError, authenticate } = useBackendActor();
+  const { identity } = useSiweIdentity();
+  
+  if (error) {
+    return (
+      <div>
+        <p>Error: {error.message}</p>
+        <button onClick={() => {
+          clearError();
+          if (identity) {
+            authenticate(identity);
+          }
+        }}>
+          Retry
+        </button>
+      </div>
+    );
+  }
+  
+  // ...
+}
 ```
 
-## Updates
+### Custom HTTP Agent Options
 
-See the [CHANGELOG](CHANGELOG.md) for details on updates.
+Configure the HTTP agent with custom options:
+
+```tsx
+export const useBackendActor = createActorStore<_SERVICE>({
+  canisterId,
+  idlFactory,
+  httpAgentOptions: {
+    host: "https://ic0.app",
+    credentials: "include",
+    headers: {
+      "X-Custom-Header": "value",
+    },
+  },
+  actorOptions: {
+    callTransform: (methodName, args, callConfig) => {
+      // Transform calls before sending
+      return [methodName, args, callConfig];
+    },
+    queryTransform: (methodName, args, callConfig) => {
+      // Transform queries before sending
+      return [methodName, args, callConfig];
+    },
+  },
+});
+```
+
+## API Reference
+
+### createActorStore
+
+Creates a React hook for interacting with an IC canister.
+
+```typescript
+function createActorStore<T>(options: CreateActorStoreOptions<T>): () => UseActorReturn<T>
+```
+
+#### Options
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `canisterId` | `string` | Yes | The canister ID |
+| `idlFactory` | `IDL.InterfaceFactory` | Yes | The IDL factory for the canister |
+| `httpAgentOptions` | `HttpAgentOptions` | No | Options for the HTTP agent |
+| `actorOptions` | `ActorConfig` | No | Options for the actor |
+
+
+### createAutoInitActorStore
+
+Creates a React hook with automatic initialization when identity becomes available.
+
+```typescript
+function createAutoInitActorStore<T>(
+  options: CreateActorStoreOptions<T> & {
+    getIdentity: () => Identity | undefined;
+  }
+): () => UseActorReturn<T>
+```
+
+#### Additional Options
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `getIdentity` | `() => Identity \| undefined` | Yes | Function to retrieve the current identity |
+
+### Hook Return Value
+
+Both `createActorStore` and `createAutoInitActorStore` return hooks that provide:
+
+```typescript
+interface UseActorReturn<T> {
+  actor: ActorSubclass<T> | undefined;
+  isInitializing: boolean;
+  isAuthenticated: boolean;
+  error: Error | undefined;
+  authenticate: (identity: Identity) => Promise<void>;
+  setInterceptors: (interceptors: InterceptorOptions) => void;
+  reset: () => void;
+  clearError: () => void;
+}
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `actor` | `ActorSubclass<T> \| undefined` | The actor instance (initialized with anonymous agent by default) |
+| `isInitializing` | `boolean` | Whether the actor is being initialized |
+| `isAuthenticated` | `boolean` | Whether the actor is authenticated with a non-anonymous identity |
+| `error` | `Error \| undefined` | Any error that occurred during initialization or authentication |
+| `authenticate` | `(identity: Identity) => Promise<void>` | Function to authenticate the actor with an identity |
+| `setInterceptors` | `(interceptors: InterceptorOptions) => void` | Function to set up interceptors |
+| `reset` | `() => void` | Function to reset the actor state |
+| `clearError` | `() => void` | Function to clear error state |
+
+## Migration from v0.1.x
+
+If you're upgrading from v0.1.x, check out the [Migration Guide](MIGRATION.md) for detailed instructions on updating your code to use the new API.
+
+## Examples
+
+### With ic-use-siwe-identity
+
+```tsx
+import { createActorStore } from "ic-use-actor";
+import { useSiweIdentity } from "ic-use-siwe-identity";
+
+export const useBackendActor = createActorStore<_SERVICE>({
+  canisterId,
+  idlFactory,
+});
+
+function App() {
+  const { identity, isInitializing: isIdentityInitializing, clear } = useSiweIdentity();
+  const { actor, authenticate, setInterceptors, isAuthenticated, isInitializing: isActorInitializing } = useBackendActor();
+  
+  useEffect(() => {
+    // Set up interceptors once
+    setInterceptors({
+      onResponseError: (data) => {
+        if (data.error.message?.includes("delegation expired")) {
+          clear(); // Clear identity when expired
+        }
+        return data.error;
+      }
+    });
+  }, [setInterceptors, clear]);
+  
+  useEffect(() => {
+    if (identity) {
+      authenticate(identity);
+    }
+  }, [identity, authenticate]);
+  
+  if (isIdentityInitializing || isActorInitializing) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    return <button onClick={login}>Sign In</button>;
+  }
+  
+  return <YourApp actor={actor} />;
+}
+```
+
+### With Internet Identity
+
+```tsx
+import { createActorStore } from "ic-use-actor";
+import { AuthClient } from "@dfinity/auth-client";
+
+export const useBackendActor = createActorStore<_SERVICE>({
+  canisterId,
+  idlFactory,
+});
+
+function App() {
+  const [authClient, setAuthClient] = useState<AuthClient>();
+  const { actor, authenticate, isAuthenticated } = useBackendActor();
+  
+  useEffect(() => {
+    AuthClient.create().then(setAuthClient);
+  }, []);
+  
+  const login = async () => {
+    await authClient?.login({
+      identityProvider: "https://identity.ic0.app",
+      onSuccess: () => {
+        const identity = authClient.getIdentity();
+        authenticate(identity);
+      },
+    });
+  };
+  
+  return isAuthenticated ? <YourApp actor={actor} /> : <button onClick={login}>Login</button>;
+}
+```
 
 ## Author
 
-- [kristofer@kristoferlund.se](mailto:kristofer@kristoferlund.se)
+- [kristofer@fmckl.se](mailto:kristofer@fmckl.se)
 - Twitter: [@kristoferlund](https://twitter.com/kristoferlund)
 - Discord: kristoferkristofer
 - Telegram: [@kristoferkristofer](https://t.me/kristoferkristofer)
 
 ## Contributing
 
-Contributions are welcome. Please submit your pull requests or open issues to propose changes or report bugs.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+MIT
 
-[version-image]: https://img.shields.io/npm/v/ic-use-actor
-[dl-image]: https://img.shields.io/npm/dw/ic-use-actor
+[version-image]: https://img.shields.io/npm/v/ic-use-actor.svg?style=flat-square
+[dl-image]: https://img.shields.io/npm/dm/ic-use-actor.svg?style=flat-square
 [npm-link]: https://www.npmjs.com/package/ic-use-actor

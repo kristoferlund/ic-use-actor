@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@xstate/store':
+        specifier: ^3.8.5
+        version: 3.8.5(react@18.3.1)
     devDependencies:
       '@dfinity/agent':
         specifier: ^3.1.0
@@ -207,6 +211,17 @@ packages:
 
   '@types/react@18.3.23':
     resolution: {integrity: sha512-/LDXMQh55EzZQ0uVAZmKKhfENivEvWz6E+EYzh+/MCjMhNsotd+ZHhBGIjFDTi6+fz0OhQQQLbTgdQIxxCsC0w==}
+
+  '@xstate/store@3.8.5':
+    resolution: {integrity: sha512-XzuEv/xWkoLDh6PMHX+uTCTRzPMi96/hwhg263h7d4JMPlL+0FIa/5xIyx45+zxHcWzM7OLAhr29kGW7qPNoYA==}
+    peerDependencies:
+      react: ^18.2.0 || ^19.0.0
+      solid-js: ^1.7.6
+    peerDependenciesMeta:
+      react:
+        optional: true
+      solid-js:
+        optional: true
 
   ansi-styles@3.2.1:
     resolution: {integrity: sha512-VT0ZI6kZRdTh8YyJw3SMbYm/u+NqfsAxEpWO0Pf9sq8/e94WxxOpPKx9FR1FlyCtOVDNOQ+8ntlqFxiRc+r5qA==}
@@ -851,6 +866,10 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.15
       csstype: 3.1.3
+
+  '@xstate/store@3.8.5(react@18.3.1)':
+    optionalDependencies:
+      react: 18.3.1
 
   ansi-styles@3.2.1:
     dependencies:

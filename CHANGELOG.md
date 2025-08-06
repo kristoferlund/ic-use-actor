@@ -9,13 +9,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2025-08-06
 
+### Added
+
+- New simplified API using XState stores for state management
+- `createActorStore` function for creating typed actor hooks without React Context
+- Actors are now initialized immediately with an anonymous agent, allowing unauthenticated calls
+- `authenticate` method to authenticate an existing actor with an identity
+- `setInterceptors` method to configure request/response interceptors separately from authentication
+- `isAuthenticated` flag to track authentication status
+- Migration guide for upgrading from v0.1.x
+
 ### Changed
 
-- Upgraded minimum required versions of @dfinity/xxx dependencies to >=v3.1.0 ([1aa0f44](https://github.com/kristoferlund/ic-use-actor/commit/1aa0f44637e2f2fde54ce97087c2af019f1892d2))
+- **BREAKING**: Complete API redesign - replaced React Context pattern with XState stores
+- **BREAKING**: Upgraded minimum required versions of @dfinity/xxx dependencies to >=v3.1.0 ([1aa0f44](https://github.com/kristoferlund/ic-use-actor/commit/1aa0f44637e2f2fde54ce97087c2af019f1892d2))
+- **BREAKING**: Interceptors are now set via `setInterceptors()` method instead of during initialization
+- No longer requires Provider components or React Context
+- Actor state is now managed globally via XState stores
+- Simplified setup - one function call per canister instead of context + hook + provider
+- Actors are created immediately on store creation with anonymous agent
+- Authentication and interceptor setup are now separate concerns
 
 ### Removed
 
+- **BREAKING**: Removed `createActorContext` (no longer needed)
+- **BREAKING**: Removed `createUseActorHook` (replaced by `createActorStore`)
+- **BREAKING**: Removed `ActorProvider` component (no longer needed)
 - **BREAKING**: Removed custom error handling utilities `AgentHTTPResponseError`, `isAgentHTTPResponseError`, and `isIdentityExpiredError` ([3ba110e](https://github.com/kristoferlund/ic-use-actor/commit/3ba110e717254b188785a1e90db89d7428486553))
+
+### Dependencies
+
+- Added `@xstate/store` as a peer dependency (>=2.0.0)
 
 ## 0.1.0 - 2024-10-16
 
