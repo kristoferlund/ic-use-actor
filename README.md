@@ -25,14 +25,12 @@ A React hook library for interacting with Internet Computer (IC) canisters. `ic-
     - [Basic Setup](#basic-setup)
     - [Using in Components](#using-in-components)
     - [Multiple Canisters](#multiple-canisters)
-    - [Auto-initialization](#auto-initialization)
   - [Advanced Usage](#advanced-usage)
     - [Interceptors](#interceptors)
     - [Error Handling](#error-handling)
     - [Custom HTTP Agent Options](#custom-http-agent-options)
   - [API Reference](#api-reference)
-    - [createActorStore](#createactorstore)
-    - [createAutoInitActorStore](#createautoinitactorstore)
+    - [createActorHook](#createactorhook)
     - [Hook Return Value](#hook-return-value)
   - [Migration from v0.1.x](#migration-from-v01x)
   - [Examples](#examples)
@@ -62,11 +60,11 @@ pnpm add ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
 
 ```tsx
 // 1. Create your actor hook
-import { createActorStore } from "ic-use-actor";
+import { createActorHook } from "ic-use-actor";
 import { canisterId, idlFactory } from "./declarations/my_canister";
 import { _SERVICE } from "./declarations/my_canister/my_canister.did";
 
-export const useMyCanister = createActorStore<_SERVICE>({
+export const useMyCanister = createActorHook<_SERVICE>({
   canisterId,
   idlFactory,
 });
@@ -105,15 +103,15 @@ function App() {
 
 ### Basic Setup
 
-Create a hook for your canister by calling `createActorStore` with your canister's configuration:
+Create a hook for your canister by calling `createActorHook` with your canister's configuration:
 
 ```tsx
 // actors.ts
-import { createActorStore } from "ic-use-actor";
+import { createActorHook } from "ic-use-actor";
 import { canisterId, idlFactory } from "./declarations/backend";
 import { _SERVICE } from "./declarations/backend/backend.did";
 
-export const useBackendActor = createActorStore<_SERVICE>({
+export const useBackendActor = createActorHook<_SERVICE>({
   canisterId,
   idlFactory,
 });
@@ -173,17 +171,17 @@ Working with multiple canisters is straightforward - just create a hook for each
 
 ```tsx
 // actors.ts
-export const useBackendActor = createActorStore<BackendService>({
+export const useBackendActor = createActorHook<BackendService>({
   canisterId: backendCanisterId,
   idlFactory: backendIdlFactory,
 });
 
-export const useNFTActor = createActorStore<NFTService>({
+export const useNFTActor = createActorHook<NFTService>({
   canisterId: nftCanisterId,
   idlFactory: nftIdlFactory,
 });
 
-export const useTokenActor = createActorStore<TokenService>({
+export const useTokenActor = createActorHook<TokenService>({
   canisterId: tokenCanisterId,
   idlFactory: tokenIdlFactory,
 });
@@ -303,7 +301,7 @@ function MyComponent() {
 Configure the HTTP agent with custom options:
 
 ```tsx
-export const useBackendActor = createActorStore<_SERVICE>({
+export const useBackendActor = createActorHook<_SERVICE>({
   canisterId,
   idlFactory,
   httpAgentOptions: {
@@ -328,12 +326,12 @@ export const useBackendActor = createActorStore<_SERVICE>({
 
 ## API Reference
 
-### createActorStore
+### createActorHook
 
 Creates a React hook for interacting with an IC canister.
 
 ```typescript
-function createActorStore<T>(options: CreateActorStoreOptions<T>): () => UseActorReturn<T>
+function createActorHook<T>(options: CreateActorHookOptions<T>): () => UseActorReturn<T>
 ```
 
 #### Options
@@ -348,7 +346,7 @@ function createActorStore<T>(options: CreateActorStoreOptions<T>): () => UseActo
 
 ### Hook Return Value
 
-`createActorStore` returns a hook that provides:
+`createActorHook` returns a hook that provides:
 
 ```typescript
 interface UseActorReturn<T> {

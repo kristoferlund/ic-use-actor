@@ -17,9 +17,9 @@ import type { InterceptorOptions } from "./interceptor-data.type";
 export * from "./interceptor-data.type";
 
 /**
- * Configuration options for creating an actor store
+ * Configuration options for creating an actor hook
  */
-export interface CreateActorStoreOptions {
+export interface CreateActorHookOptions {
   /** The unique identifier of the canister that the actor will interact with. */
   canisterId: string;
 
@@ -142,11 +142,11 @@ function createInterceptorProxy<T>(
  * @example
  * ```ts
  * // Setup in your actors file
- * import { createActorStore } from "ic-use-actor";
+ * import { createActorHook } from "ic-use-actor";
  * import { canisterId, idlFactory } from "./declarations/backend";
  * import { _SERVICE } from "./declarations/backend/backend.did";
  *
- * export const useBackendActor = createActorStore<_SERVICE>({
+ * export const useBackendActor = createActorHook<_SERVICE>({
  *   canisterId,
  *   idlFactory,
  * });
@@ -187,8 +187,8 @@ function createInterceptorProxy<T>(
  * }
  * ```
  */
-export function createActorStore<T>(
-  options: CreateActorStoreOptions,
+export function createActorHook<T>(
+  options: CreateActorHookOptions,
 ): () => UseActorReturn<T> {
   let _actor: ActorSubclass<T> | undefined;
 
@@ -336,24 +336,24 @@ export function createActorStore<T>(
 }
 
 /**
- * @deprecated Use `createActorStore` instead. This export is provided for backwards compatibility.
+ * @deprecated Use `createActorHook` instead. This export is provided for backwards compatibility.
  */
-export const createUseActorHook = createActorStore;
+export const createUseActorHook = createActorHook;
 
 /**
- * @deprecated Context-based actors are no longer needed. Use `createActorStore` instead.
+ * @deprecated Context-based actors are no longer needed. Use `createActorHook` instead.
  */
 export function createActorContext<T>() {
   console.warn(
-    "createActorContext is deprecated. Use createActorStore instead.",
+    "createActorContext is deprecated. Use createActorHook instead.",
   );
   return null as any;
 }
 
 /**
- * @deprecated The ActorProvider component is no longer needed. Use `createActorStore` instead.
+ * @deprecated The ActorProvider component is no longer needed. Use `createActorHook` instead.
  */
 export function ActorProvider(_props: any) {
-  console.warn("ActorProvider is deprecated. Use createActorStore instead.");
+  console.warn("ActorProvider is deprecated. Use createActorHook instead.");
   return null;
 }

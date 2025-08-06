@@ -18,7 +18,7 @@ The following error handling utilities have been removed since they are no longe
 ### 3. API Changes
 
 - `createActorContext()` - Deprecated (no longer needed)
-- `createUseActorHook()` - Deprecated (use `createActorStore()` instead)
+- `createUseActorHook()` - Deprecated (use `createActorHook()` instead)
 - `ActorProvider` - Deprecated (no longer needed)
 
 ## Migration Steps
@@ -38,12 +38,12 @@ export const useBackendActor = createUseActorHook<_SERVICE>(actorContext);
 
 #### After (v0.2.0):
 ```tsx
-import { createActorStore } from "ic-use-actor";
+import { createActorHook } from "ic-use-actor";
 import { canisterId, idlFactory } from "./declarations/backend";
 import { _SERVICE } from "./declarations/backend/backend.did";
 
 // Create hook directly - no context needed!
-export const useBackendActor = createActorStore<_SERVICE>({
+export const useBackendActor = createActorHook<_SERVICE>({
   canisterId,
   idlFactory,
 });
@@ -171,12 +171,12 @@ function App() {
 #### After (v0.2.0):
 ```tsx
 // Just create hooks - no providers needed!
-export const useBackendActor = createActorStore<BackendService>({
+export const useBackendActor = createActorHook<BackendService>({
   canisterId: backendCanisterId,
   idlFactory: backendIdlFactory,
 });
 
-export const useNFTActor = createActorStore<NFTService>({
+export const useNFTActor = createActorHook<NFTService>({
   canisterId: nftCanisterId,
   idlFactory: nftIdlFactory,
 });
@@ -263,7 +263,7 @@ useEffect(() => {
 
 ### Multiple Actors Not Working
 
-Each actor hook created with `createActorStore()` maintains its own independent state. Make sure you're authenticating each one separately:
+Each actor hook created with `createActorHook()` maintains its own independent state. Make sure you're authenticating each one separately:
 
 ```tsx
 const { authenticate: authBackend } = useBackendActor();

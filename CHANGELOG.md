@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New simplified API using XState stores for state management
-- `createActorStore` function for creating typed actor hooks without React Context
+- `createActorHook` function for creating typed actor hooks without React Context
 - Actors are now initialized immediately with an anonymous agent, allowing unauthenticated calls
 - `authenticate` method to authenticate an existing actor with an identity
 - `setInterceptors` method to configure request/response interceptors separately from authentication
@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **BREAKING**: Removed `createActorContext` (no longer needed)
-- **BREAKING**: Removed `createUseActorHook` (replaced by `createActorStore`)
+- **BREAKING**: Removed `createUseActorHook` (replaced by `createActorHook`)
 - **BREAKING**: Removed `ActorProvider` component (no longer needed)
 - **BREAKING**: Removed custom error handling utilities `AgentHTTPResponseError`, `isAgentHTTPResponseError`, and `isIdentityExpiredError` ([3ba110e](https://github.com/kristoferlund/ic-use-actor/commit/3ba110e717254b188785a1e90db89d7428486553))
 
