@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-08-06
+
+### Changed
+
+- Upgraded minimum required versions of @dfinity/xxx dependencies to >=v3.1.0 ([1aa0f44](https://github.com/kristoferlund/ic-use-actor/commit/1aa0f44637e2f2fde54ce97087c2af019f1892d2))
+
+### Removed
+
+- **BREAKING**: Removed custom error handling utilities `AgentHTTPResponseError`, `isAgentHTTPResponseError`, and `isIdentityExpiredError` ([3ba110e](https://github.com/kristoferlund/ic-use-actor/commit/3ba110e717254b188785a1e90db89d7428486553))
+
 ## 0.1.0 - 2024-10-16
 
 ### Changed
