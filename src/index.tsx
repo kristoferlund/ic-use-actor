@@ -190,6 +190,8 @@ function createInterceptorProxy<T>(
 export function createActorStore<T>(
   options: CreateActorStoreOptions,
 ): () => UseActorReturn<T> {
+  let _actor: ActorSubclass<T> | undefined;
+
   // Create the store instance
   const store = createStore({
     context: {
@@ -227,7 +229,7 @@ export function createActorStore<T>(
         shouldFetchRootKey,
       });
 
-      const actor = Actor.createActor<T>(options.idlFactory, {
+      _actor = Actor.createActor<T>(options.idlFactory, {
         agent,
         canisterId: options.canisterId,
         ...options.actorOptions,
@@ -235,7 +237,7 @@ export function createActorStore<T>(
 
       store.send({
         type: "setState" as const,
-        actor: actor,
+        actor: _actor,
         isInitializing: false,
         isAuthenticated: false,
         error: undefined,
@@ -259,12 +261,11 @@ export function createActorStore<T>(
     try {
       store.send({ type: "setState" as const, isInitializing: true });
 
-      const actor = store.getSnapshot().context.actor;
-      if (!actor) {
+      if (!_actor) {
         throw new Error("No actor found");
       }
 
-      const agent = Actor.agentOf(actor);
+      const agent = Actor.agentOf(_actor);
       if (!agent) {
         throw new Error("No agent found for actor");
       }
@@ -290,11 +291,10 @@ export function createActorStore<T>(
   // Interceptors are applied as a proxy over the existing actor
   const setInterceptors = (interceptors: InterceptorOptions) => {
     try {
-      const actor = store.getSnapshot().context.actor;
-      if (!actor) {
+      if (!_actor) {
         throw new Error("No actor found");
       }
-      const proxiedActor = createInterceptorProxy(actor, interceptors);
+      const proxiedActor = createInterceptorProxy(_actor, interceptors);
       store.send({ type: "setState" as const, actor: proxiedActor });
     } catch (error) {
       store.send({
@@ -325,6 +325,7 @@ export function createActorStore<T>(
       authenticate,
       setInterceptors,
       reset: () => {
+        _actor = undefined;
         store.send({ type: "reset" as const });
         initializeActor();
       },
