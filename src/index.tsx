@@ -153,22 +153,10 @@ function createInterceptorProxy<T>(
  *
  * // Use in your components
  * function MyComponent() {
- *   const { actor, authenticate, setInterceptors, isAuthenticated } = useBackendActor();
- *   const { identity, clear } = useSiweIdentity();
+ *   const { actor, authenticate, isAuthenticated } = useBackendActor();
+ *   const { identity } = useInternetIdentity();
  *
- *   useEffect(() => {
- *     // Set up interceptors once - they persist across authentication changes
- *     setInterceptors({
- *       onResponseError: (data) => {
- *         // Check if identity expired and clear it
- *         if (data.error.message?.includes("delegation expired")) {
- *           clear();
- *         }
- *         return data.error;
- *       }
- *     });
- *   }, [setInterceptors, clear]);
- *
+ *   // Authenticating is optional
  *   useEffect(() => {
  *     if (identity) {
  *       authenticate(identity);
