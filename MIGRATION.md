@@ -10,7 +10,7 @@ The library no longer uses React Context and Provider components. Instead, it us
 
 ### 2. Removed Error Handling Utilities
 
-The following error handling utilities have been removed:
+The following error handling utilities have been removed since they are no longer needed and don't work with v3 of the `@dfinity/x` libraries:
 - `AgentHTTPResponseError`
 - `isAgentHTTPResponseError`
 - `isIdentityExpiredError`
@@ -116,12 +116,11 @@ function MyComponent() {
   // Set up interceptors once - can access React hooks and context
   useEffect(() => {
     setInterceptors({
-      onResponseError: (data) => {
-        if (data.error.message?.includes("delegation expired")) {
-          clear(); // Clear identity from React hook
-        }
-        return data.error;
-      }
+      onRequest: (data) => {
+        console.log(`Calling ${data.methodName}`, data.args);
+        // Modify args if needed
+        return data.args;
+      },
     });
   }, [setInterceptors, clear]);
 
@@ -249,15 +248,6 @@ This separation allows interceptors to be set up once and persist across authent
 9. **Separate Concerns**: Authentication and interceptor setup are independent operations
 
 ## Troubleshooting
-
-### Error: "useActor must be used within an ActorProvider"
-
-This error no longer exists in v0.2.0. If you see it, you're likely still using the old API. Make sure to:
-1. Update to `createActorStore()` instead of `createUseActorHook()`
-2. Remove all `ActorProvider` components
-3. Actors are initialized automatically with anonymous agent
-4. Use `authenticate()` to add identity authentication
-5. Use `setInterceptors()` to configure request/response handling
 
 ### Identity Not Persisting
 

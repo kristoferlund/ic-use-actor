@@ -63,47 +63,35 @@ pnpm add ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
 ```tsx
 // 1. Create your actor hook
 import { createActorStore } from "ic-use-actor";
-import { canisterId, idlFactory } from "./declarations/backend";
-import { _SERVICE } from "./declarations/backend/backend.did";
+import { canisterId, idlFactory } from "./declarations/my_canister";
+import { _SERVICE } from "./declarations/my_canister/my_canister.did";
 
-export const useBackendActor = createActorStore<_SERVICE>({
+export const useMyCanister = createActorStore<_SERVICE>({
   canisterId,
   idlFactory,
 });
 
 // 2. Use it in your components
 function MyComponent() {
-  const { actor, authenticate, setInterceptors, isAuthenticated, isInitializing, error } = useBackendActor();
-  const { identity, clear } = useSiweIdentity(); // or any identity provider
-  
-  useEffect(() => {
-    // Set up interceptors once
-    setInterceptors({
-      onResponseError: (data) => {
-        if (data.error.message?.includes("delegation expired")) {
-          clear(); // Clear identity from React hook
-        }
-        return data.error;
-      }
-    });
-  }, [setInterceptors, clear]);
-  
+  const { actor: myCanister, authenticate, isAuthenticated, isInitializing, error } = useMyCanister();
+  const { identity, clear } = useInternetIdentity(); // or any identity provider
+
   useEffect(() => {
     if (identity) {
       authenticate(identity);
     }
   }, [identity, authenticate]);
-  
+
   const handleClick = async () => {
-    if (!actor) return;
-    const result = await actor.myMethod();
+    if (!myCanister) return;
+    const result = await myCanister.myMethod();
     console.log(result);
   };
-  
+
   if (error) return <div>Error: {error.message}</div>;
   if (isInitializing) return <div>Loading...</div>;
   if (!isAuthenticated) return <div>Please sign in</div>;
-  
+
   return <button onClick={handleClick}>Call Canister</button>;
 }
 
@@ -137,47 +125,29 @@ The hook returns an object with the actor instance and several utility functions
 
 ```tsx
 function MyComponent() {
-  const { 
+  const {
     actor,           // The actor instance (initialized with anonymous agent by default)
     authenticate,    // Function to authenticate the actor with an identity
     setInterceptors, // Function to set up interceptors
     isAuthenticated, // Boolean indicating if actor is authenticated
     isInitializing,  // Boolean indicating if actor is being initialized
-    error,          // Any error that occurred during initialization
-    reset,          // Function to reset the actor state
-    clearError      // Function to clear error state
+    error,           // Any error that occurred during initialization
+    reset,           // Function to reset the actor state
+    clearError       // Function to clear error state
   } = useBackendActor();
-  
-  const { identity, clear } = useSiweIdentity();
-  
-  // Set up interceptors once
-  useEffect(() => {
-    setInterceptors({
-      onRequest: (data) => {
-        console.log(`Calling ${data.methodName}`, data.args);
-        return data.args;
-      },
-      onResponseError: (data) => {
-        // Access React hooks in interceptors
-        if (data.error.message?.includes("delegation expired")) {
-          clear(); // Clear identity when expired
-        }
-        return data.error;
-      }
-    });
-  }, [setInterceptors, clear]);
-  
+
+  const { identity, clear } = useInternetIdentity();
+
   // Authenticate when identity is available
   useEffect(() => {
     if (identity) {
       authenticate(identity);
     }
   }, [identity, authenticate]);
-  
+
   // Use the actor (works with anonymous or authenticated)
   const fetchData = async () => {
     if (!actor) return;
-    
     try {
       const data = await actor.getData();
       console.log(data);
@@ -185,7 +155,7 @@ function MyComponent() {
       console.error("Failed to fetch data:", err);
     }
   };
-  
+
   return (
     <div>
       {error && <div>Error: {error.message}</div>}
@@ -224,7 +194,7 @@ function MultiCanisterComponent() {
   const backend = useBackendActor();
   const nft = useNFTActor();
   const token = useTokenActor();
-  
+
   useEffect(() => {
     if (identity) {
       backend.authenticate(identity);
@@ -232,42 +202,8 @@ function MultiCanisterComponent() {
       token.authenticate(identity);
     }
   }, [identity]);
-  
+
   // Use the actors...
-}
-```
-
-### Auto-initialization
-
-If you have a global identity store, you can use `createAutoInitActorStore` for automatic initialization:
-
-```tsx
-// actors.ts
-import { createAutoInitActorStore } from "ic-use-actor";
-import { identityStore } from "./stores/identity";
-
-export const useBackendActor = createAutoInitActorStore<_SERVICE>({
-  canisterId,
-  idlFactory,
-  getIdentity: () => identityStore.getState().identity,
-  getInterceptors: () => ({
-    onResponseError: (data) => {
-      if (data.error.message?.includes("delegation expired")) {
-        identityStore.clear();
-      }
-      return data.error;
-    }
-  })
-});
-
-// Component - no manual initialization needed!
-function MyComponent() {
-  const { actor, isInitializing } = useBackendActor();
-  
-  if (isInitializing) return <div>Loading...</div>;
-  if (!actor) return <div>Please sign in</div>;
-  
-  return <button onClick={() => actor.myMethod()}>Call Method</button>;
 }
 ```
 
@@ -275,14 +211,14 @@ function MyComponent() {
 
 ### Interceptors
 
-Add request/response interceptors to process or log interactions with your canister. Interceptors are provided when initializing the actor, allowing them to access React context and hooks:
+Add request/response interceptors to proxy and process or log interactions with your canister. Interceptors intercept booth outgoing requests and incoming responses as well as errors.
 
 ```tsx
 function MyComponent() {
   const { actor, authenticate, setInterceptors } = useBackendActor();
   const { identity, logout } = useAuthProvider();
   const navigate = useNavigate();
-  
+
   // Set up interceptors once - they can access React hooks
   useEffect(() => {
     setInterceptors({
@@ -292,43 +228,43 @@ function MyComponent() {
         // Modify args if needed
         return data.args;
       },
-      
+
       // Called after successful responses
       onResponse: (data) => {
         console.log(`Response from ${data.methodName}`, data.response);
         // Modify response if needed
         return data.response;
       },
-      
+
       // Called on request errors (e.g., network issues)
       onRequestError: (data) => {
         console.error(`Request error in ${data.methodName}`, data.error);
         // Transform or handle error
         return data.error;
       },
-      
+
       // Called on response errors - can access React hooks here!
       onResponseError: (data) => {
         console.error(`Response error in ${data.methodName}`, data.error);
-        
+
         // Check for expired identity and handle it
         if (data.error.message?.includes("delegation expired")) {
           logout(); // Call React hook function
           navigate('/login'); // Use React Router
         }
-        
+
         return data.error;
       },
     });
   }, [setInterceptors, logout, navigate]);
-  
+
   // Authenticate when identity is available
   useEffect(() => {
     if (identity) {
       authenticate(identity);
     }
   }, [identity, authenticate]);
-  
+
   // ... rest of component
 }
 ```
@@ -341,7 +277,7 @@ The hook provides error state that you can use to handle initialization errors:
 function MyComponent() {
   const { actor, error, clearError, authenticate } = useBackendActor();
   const { identity } = useSiweIdentity();
-  
+
   if (error) {
     return (
       <div>
@@ -357,7 +293,7 @@ function MyComponent() {
       </div>
     );
   }
-  
+
   // ...
 }
 ```
@@ -410,27 +346,9 @@ function createActorStore<T>(options: CreateActorStoreOptions<T>): () => UseActo
 | `actorOptions` | `ActorConfig` | No | Options for the actor |
 
 
-### createAutoInitActorStore
-
-Creates a React hook with automatic initialization when identity becomes available.
-
-```typescript
-function createAutoInitActorStore<T>(
-  options: CreateActorStoreOptions<T> & {
-    getIdentity: () => Identity | undefined;
-  }
-): () => UseActorReturn<T>
-```
-
-#### Additional Options
-
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `getIdentity` | `() => Identity \| undefined` | Yes | Function to retrieve the current identity |
-
 ### Hook Return Value
 
-Both `createActorStore` and `createAutoInitActorStore` return hooks that provide:
+`createActorStore` returns a hook that provides:
 
 ```typescript
 interface UseActorReturn<T> {
@@ -459,86 +377,6 @@ interface UseActorReturn<T> {
 ## Migration from v0.1.x
 
 If you're upgrading from v0.1.x, check out the [Migration Guide](MIGRATION.md) for detailed instructions on updating your code to use the new API.
-
-## Examples
-
-### With ic-use-siwe-identity
-
-```tsx
-import { createActorStore } from "ic-use-actor";
-import { useSiweIdentity } from "ic-use-siwe-identity";
-
-export const useBackendActor = createActorStore<_SERVICE>({
-  canisterId,
-  idlFactory,
-});
-
-function App() {
-  const { identity, isInitializing: isIdentityInitializing, clear } = useSiweIdentity();
-  const { actor, authenticate, setInterceptors, isAuthenticated, isInitializing: isActorInitializing } = useBackendActor();
-  
-  useEffect(() => {
-    // Set up interceptors once
-    setInterceptors({
-      onResponseError: (data) => {
-        if (data.error.message?.includes("delegation expired")) {
-          clear(); // Clear identity when expired
-        }
-        return data.error;
-      }
-    });
-  }, [setInterceptors, clear]);
-  
-  useEffect(() => {
-    if (identity) {
-      authenticate(identity);
-    }
-  }, [identity, authenticate]);
-  
-  if (isIdentityInitializing || isActorInitializing) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <button onClick={login}>Sign In</button>;
-  }
-  
-  return <YourApp actor={actor} />;
-}
-```
-
-### With Internet Identity
-
-```tsx
-import { createActorStore } from "ic-use-actor";
-import { AuthClient } from "@dfinity/auth-client";
-
-export const useBackendActor = createActorStore<_SERVICE>({
-  canisterId,
-  idlFactory,
-});
-
-function App() {
-  const [authClient, setAuthClient] = useState<AuthClient>();
-  const { actor, authenticate, isAuthenticated } = useBackendActor();
-  
-  useEffect(() => {
-    AuthClient.create().then(setAuthClient);
-  }, []);
-  
-  const login = async () => {
-    await authClient?.login({
-      identityProvider: "https://identity.ic0.app",
-      onSuccess: () => {
-        const identity = authClient.getIdentity();
-        authenticate(identity);
-      },
-    });
-  };
-  
-  return isAuthenticated ? <YourApp actor={actor} /> : <button onClick={login}>Login</button>;
-}
-```
 
 ## Author
 
