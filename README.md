@@ -209,7 +209,7 @@ function MultiCanisterComponent() {
 
 ### Interceptors
 
-Add request/response interceptors to proxy and process or log interactions with your canister. Interceptors intercept booth outgoing requests and incoming responses as well as errors.
+Add request/response interceptors to proxy and process or log interactions with your canister. Interceptors intercept both outgoing requests and incoming responses as well as errors.
 
 ```tsx
 function MyComponent() {
