@@ -71,12 +71,13 @@ export const useMyCanister = createActorHook<_SERVICE>({
 
 // 2. Use it in your components
 function MyComponent() {
-  const { actor: myCanister, authenticate, isAuthenticated, isInitializing, error } = useMyCanister();
-  const { identity, clear } = useInternetIdentity(); // or any identity provider
+  const { actor: myCanister, authenticate, isAuthenticated, status, isInitializing, isSuccess, isError, error } = useMyCanister();
+  const { identity } = useInternetIdentity(); // or any identity provider
 
+  // Authenticate when identity is available (keeps initialization separate from authentication)
   useEffect(() => {
     if (identity) {
-      authenticate(identity);
+      void authenticate(identity);
     }
   }, [identity, authenticate]);
 
@@ -93,7 +94,7 @@ function MyComponent() {
   return <button onClick={handleClick}>Call Canister</button>;
 }
 
-// 3. That's it! No providers needed in your App
+// 3. That's it!
 function App() {
   return <MyComponent />;
 }
@@ -128,18 +129,21 @@ function MyComponent() {
     authenticate,    // Function to authenticate the actor with an identity
     setInterceptors, // Function to set up interceptors
     isAuthenticated, // Boolean indicating if actor is authenticated
-    isInitializing,  // Boolean indicating if actor is being initialized
+    status,          // 'initializing' | 'success' | 'error'
+    isInitializing,  // status === 'initializing'
+    isSuccess,       // status === 'success'
+    isError,         // status === 'error'
     error,           // Any error that occurred during initialization
     reset,           // Function to reset the actor state
     clearError       // Function to clear error state
   } = useBackendActor();
 
-  const { identity, clear } = useInternetIdentity();
+  const { identity } = useInternetIdentity();
 
   // Authenticate when identity is available
   useEffect(() => {
     if (identity) {
-      authenticate(identity);
+      void authenticate(identity);
     }
   }, [identity, authenticate]);
 
@@ -157,7 +161,7 @@ function MyComponent() {
   return (
     <div>
       {error && <div>Error: {error.message}</div>}
-      {isInitializing && <div>Initializing...</div>}
+      {status === "initializing" && <div>Initializing...</div>}
       <button onClick={fetchData} disabled={!actor}>Fetch Data</button>
       {isAuthenticated && <span>Authenticated</span>}
     </div>
@@ -165,45 +169,107 @@ function MyComponent() {
 }
 ```
 
+The hook function also exposes non-React helpers that can be used outside components, for example in route guards:
+
+```ts
+// Wait for the hook to finish initial setup
+await useBackendActor.ensureInitialized();
+// Inspect helper predicates
+if (useBackendActor.isInitializing()) { /* still initializing */ }
+if (useBackendActor.isSuccess()) { /* initialized successfully */ }
+if (useBackendActor.isError()) { /* initialization failed */ }
+// Check authentication helper
+if (useBackendActor.isAuthenticated()) { /* identity attached */ }
+// Get actor instance (may be undefined if not initialized)
+const actor = useBackendActor.getActor();
+// Authenticate the hook with an identity
+await useBackendActor.authenticate(identity);
+```
+
 ### Multiple Canisters
 
-Working with multiple canisters is straightforward - just create a hook for each:
+Create a hook for each canister:
 
 ```tsx
 // actors.ts
-export const useBackendActor = createActorHook<BackendService>({
-  canisterId: backendCanisterId,
-  idlFactory: backendIdlFactory,
+export const useBackendOne = createActorHook<BackendOneService>({
+  canisterId: backendOneCanisterId,
+  idlFactory: backendOneIdlFactory,
 });
 
-export const useNFTActor = createActorHook<NFTService>({
-  canisterId: nftCanisterId,
-  idlFactory: nftIdlFactory,
+export const useBackendTwo = createActorHook<BackendTwoService>({
+  canisterId: backendTwoCanisterId,
+  idlFactory: backendTwoIdlFactory,
 });
+```
 
-export const useTokenActor = createActorHook<TokenService>({
-  canisterId: tokenCanisterId,
-  idlFactory: tokenIdlFactory,
-});
+Authenticate each hook when an identity becomes available (in a component):
 
-// Component using multiple actors
+```tsx
 function MultiCanisterComponent() {
-  const { identity } = useSiweIdentity();
-  const backend = useBackendActor();
-  const nft = useNFTActor();
-  const token = useTokenActor();
+  const { identity } = useInternetIdentity();
+  const backendOne = useBackendOne();
+  const backendTwo = useBackendTwo();
 
   useEffect(() => {
     if (identity) {
-      backend.authenticate(identity);
-      nft.authenticate(identity);
-      token.authenticate(identity);
+      void backendOne.authenticate(identity);
+      void backendTwo.authenticate(identity);
     }
-  }, [identity]);
+  }, [identity, backendOne, backendTwo]);
 
   // Use the actors...
 }
 ```
+
+### Router integration
+
+When using a routing library (e.g. TanStack Router) you can initialize the Internet Identity library and then ensure and authenticate your actor hooks before a route loads.
+
+Available functions:
+
+- `ensureAllInitialized(): Promise<void>` — wait for all registered actor hooks to finish their initial anonymous setup
+- `authenticateAll(identity: Identity, filterCanisterIds?: string[]): Promise<void>` — authenticate all (or a filtered subset) of registered hooks with the provided identity
+- Per-hook helpers attached to the hook function: `useMyActor.ensureInitialized()`, `useMyActor.authenticate(identity)`, `useMyActor.getActor()`, `useMyActor.isAuthenticated()`
+
+Basic example (TanStack Router):
+
+```ts
+import { createRoute, redirect } from "@tanstack/react-router";
+import { ensureInitialized as ensureIdentityInitialized } from "ic-use-internet-identity";
+import { ensureAllInitialized, authenticateAll } from "ic-use-actor";
+import { useBackendOne, useBackendTwo } from "./actors";
+
+const dashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "dashboard",
+  beforeLoad: async () => {
+    // 1. Ensure the identity library has finished restoring any cached identity
+    const identity = await ensureIdentityInitialized();
+    if (!identity) {
+      throw redirect({ to: "/login" });
+    }
+
+    // 2. Wait for actor hooks to initialize (anonymous agents created)
+    await ensureAllInitialized();
+
+    // 3. Authenticate all registered actor hooks with the restored identity
+    await authenticateAll(identity);
+
+    // Alternatively authenticate specific hooks:
+    // await useBackendOne.ensureInitialized();
+    // await useBackendOne.authenticate(identity);
+    // await useBackendTwo.ensureInitialized();
+    // await useBackendTwo.authenticate(identity);
+  },
+  component: DashboardComponent,
+});
+```
+
+Important notes:
+
+- Always await the Internet Identity initialization first (`ic-use-internet-identity.ensureInitialized()`).
+- `beforeLoad` runs once during navigation and does not react to later authentication changes — use a reactive component to observe auth changes at runtime.
 
 ## Advanced Usage
 
@@ -351,7 +417,16 @@ function createActorHook<T>(options: CreateActorHookOptions<T>): () => UseActorR
 ```typescript
 interface UseActorReturn<T> {
   actor: ActorSubclass<T> | undefined;
+  /** Status of the actor initialization */
+  status: "initializing" | "success" | "error";
+  /** `status === "initializing"` */
   isInitializing: boolean;
+  /** `status === "success"` — actor initialization completed successfully
+       (actor instance created). Does NOT imply the actor is authenticated. */
+  isSuccess: boolean;
+  /** `status === "error"` */
+  isError: boolean;
+  /** Whether the actor has had an identity attached (authenticated) */
   isAuthenticated: boolean;
   error: Error | undefined;
   authenticate: (identity: Identity) => Promise<void>;
@@ -359,6 +434,11 @@ interface UseActorReturn<T> {
   reset: () => void;
   clearError: () => void;
 }
+
+// Non-react helpers are also available directly on the hook function:
+// await useMyActor.ensureInitialized();
+// await useMyActor.authenticate(identity);
+// useMyActor.getActor();
 ```
 
 | Property | Type | Description |
