@@ -412,45 +412,73 @@ function createActorHook<T>(options: CreateActorHookOptions<T>): () => UseActorR
 
 ### Hook Return Value
 
-`createActorHook` returns a hook that provides:
+The hook returns runtime state and helpers for interacting with the actor:
 
 ```typescript
 interface UseActorReturn<T> {
   actor: ActorSubclass<T> | undefined;
-  /** Status of the actor initialization */
+
+  // Initialization status: 'initializing' | 'success' | 'error'
   status: "initializing" | "success" | "error";
-  /** `status === "initializing"` */
-  isInitializing: boolean;
-  /** `status === "success"` — actor initialization completed successfully
-       (actor instance created). Does NOT imply the actor is authenticated. */
-  isSuccess: boolean;
-  /** `status === "error"` */
-  isError: boolean;
-  /** Whether the actor has had an identity attached (authenticated) */
-  isAuthenticated: boolean;
-  error: Error | undefined;
+  // Convenience booleans derived from `status`
+  isInitializing: boolean; // status === 'initializing'
+  isSuccess: boolean;      // status === 'success' (actor instance created)
+  isError: boolean;        // status === 'error'
+
+  // Authentication flag (separate from initialization)
+  isAuthenticated: boolean; // whether an identity has been attached
+
+  // Any error that occurred during initialization or authentication
+  error?: Error;
+
+  // Helpers
   authenticate: (identity: Identity) => Promise<void>;
   setInterceptors: (interceptors: InterceptorOptions) => void;
   reset: () => void;
   clearError: () => void;
 }
-
-// Non-react helpers are also available directly on the hook function:
-// await useMyActor.ensureInitialized();
-// await useMyActor.authenticate(identity);
-// useMyActor.getActor();
 ```
+
+Notes:
+- `isSuccess` means the actor instance was successfully created (initialization completed). It does NOT imply the actor has been authenticated — use `isAuthenticated` to check identity attachment.
+- `authenticate(identity)` attaches the identity to the actor's agent (no network calls) and updates `isAuthenticated`.
+
+Non-react helpers (attached to the hook function)
+
+Each hook function also exposes helpers you can call outside React (useful for route guards):
+
+- `ensureInitialized(): Promise<ActorSubclass<T> | undefined>` — wait for the hook's initial actor initialization to complete.
+- `authenticate(identity: Identity): Promise<void>` — attach an identity to the actor (same as the hook method).
+- `getActor(): ActorSubclass<T> | undefined` — get the current actor instance (may be proxied by interceptors).
+- `isAuthenticated(): boolean` — whether an identity is attached.
+- `isInitializing(): boolean` — predicate for initialization in progress.
+- `isSuccess(): boolean` — predicate for initialization success.
+- `isError(): boolean` — predicate for initialization error.
+
+Example:
+
+```ts
+await useBackendActor.ensureInitialized();
+if (!useBackendActor.isSuccess()) throw new Error('Actor failed to initialize');
+if (!useBackendActor.isAuthenticated()) await useBackendActor.authenticate(identity);
+const actor = useBackendActor.getActor();
+```
+
+Property summary
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `actor` | `ActorSubclass<T> \| undefined` | The actor instance (initialized with anonymous agent by default) |
-| `isInitializing` | `boolean` | Whether the actor is being initialized |
-| `isAuthenticated` | `boolean` | Whether the actor is authenticated with a non-anonymous identity |
-| `error` | `Error \| undefined` | Any error that occurred during initialization or authentication |
-| `authenticate` | `(identity: Identity) => Promise<void>` | Function to authenticate the actor with an identity |
-| `setInterceptors` | `(interceptors: InterceptorOptions) => void` | Function to set up interceptors |
-| `reset` | `() => void` | Function to reset the actor state |
-| `clearError` | `() => void` | Function to clear error state |
+| `actor` | `ActorSubclass<T> | undefined` | The actor instance (initialized with anonymous agent by default) |
+| `status` | `"initializing" | "success" | "error"` | Initialization status of the actor (only initialization) |
+| `isInitializing` | `boolean` | `status === "initializing"` |
+| `isSuccess` | `boolean` | `status === "success"` (actor instance created) |
+| `isError` | `boolean` | `status === "error"` |
+| `isAuthenticated` | `boolean` | Whether an identity has been attached to the actor |
+| `error` | `Error | undefined` | Any error that occurred during initialization or authentication |
+| `authenticate` | `(identity: Identity) => Promise<void>` | Attach an identity to the actor's agent |
+| `setInterceptors` | `(interceptors: InterceptorOptions) => void` | Apply request/response interceptors to the actor |
+| `reset` | `() => void` | Reset the actor state and reinitialize |
+| `clearError` | `() => void` | Clear stored error state |
 
 ## Migration from v0.1.x
 
