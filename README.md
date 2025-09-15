@@ -32,6 +32,7 @@ A React hook library for interacting with Internet Computer (IC) canisters. `ic-
   - [API Reference](#api-reference)
     - [createActorHook](#createactorhook)
     - [Hook Return Value](#hook-return-value)
+    - [Global Helpers](#global-helpers)
   - [Migration from v0.1.x](#migration-from-v01x)
   - [Examples](#examples)
   - [Author](#author)
@@ -479,6 +480,34 @@ Property summary
 | `setInterceptors` | `(interceptors: InterceptorOptions) => void` | Apply request/response interceptors to the actor |
 | `reset` | `() => void` | Reset the actor state and reinitialize |
 | `clearError` | `() => void` | Clear stored error state |
+
+### Global Helpers
+
+Helpers that operate across all registered hook instances (useful when your app creates multiple actor hooks):
+
+- `ensureAllInitialized(): Promise<void>` — waits for every registered hook to finish its initial anonymous setup. Useful in route guards where you want all actor hooks ready.
+
+- `authenticateAll(identity: Identity, filterCanisterIds?: string[]): Promise<void>` — attaches the provided identity to all registered hooks; if `filterCanisterIds` is supplied only hooks whose `canisterId` is included will be authenticated. Throws if any hook's authentication fails.
+
+- `authenticateCanister(identity: Identity, canisterId: string): Promise<void>` — convenience wrapper to authenticate hooks for a specific canister id.
+
+Example (router integration):
+
+```ts
+import { ensureAllInitialized, authenticateAll } from 'ic-use-actor';
+import { ensureInitialized as ensureIdentityInitialized } from 'ic-use-internet-identity';
+
+const identity = await ensureIdentityInitialized();
+if (!identity) throw redirect('/login');
+await ensureAllInitialized();
+await authenticateAll(identity);
+```
+
+
+### Notes on global helpers
+
+- `ensureAllInitialized` only waits for the initial anonymous `HttpAgent` + actor creation — it does not authenticate hooks.
+- `authenticateAll` will call each hook's `authenticate` helper which updates the per-hook `isAuthenticated` flag.
 
 ## Migration from v0.1.x
 
