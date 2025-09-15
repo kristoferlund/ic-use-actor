@@ -12,17 +12,19 @@ export type InterceptorErrorData = {
 
 /**
  * Interceptor options for customizing actor request/response handling
+ *
+ * All callbacks may return a value or a Promise — async handlers are supported.
  */
 export interface InterceptorOptions {
-  /** Callback function that will be called before the request is sent. Should return the modified arguments array. */
-  onRequest?: (data: InterceptorRequestData) => unknown[];
+  /** Callback called before the request is sent. May return modified arguments array (sync or Promise). */
+  onRequest?: (data: InterceptorRequestData) => unknown[] | Promise<unknown[]>;
 
-  /** Callback function that will be called after a successful response is received. Should return the modified response. */
-  onResponse?: (data: InterceptorResponseData) => unknown;
+  /** Callback called after a successful response is received. May return modified response (sync or Promise). */
+  onResponse?: (data: InterceptorResponseData) => unknown | Promise<unknown>;
 
-  /** Callback function that will be called when a TypeError occurs during the request. Should return the modified error. */
-  onRequestError?: (data: InterceptorErrorData) => Error | TypeError | unknown;
+  /** Callback called when an error occurs during request setup. May return a replacement error or throw. */
+  onRequestError?: (data: InterceptorErrorData) => unknown | Promise<unknown>;
 
-  /** Callback function that will be called when an error occurs during the response. Should return the modified error. */
-  onResponseError?: (data: InterceptorErrorData) => Error | TypeError | unknown;
+  /** Callback called when an error occurs during the response. May return a replacement error or throw. */
+  onResponseError?: (data: InterceptorErrorData) => unknown | Promise<unknown>;
 }
