@@ -429,7 +429,7 @@ interface UseActorReturn<T> {
   // Authentication flag (separate from initialization)
   isAuthenticated: boolean; // whether an identity has been attached
 
-  // Any error that occurred during initialization or authentication
+  // Any error that occurred during initialization. Authentication and interceptor errors do not populate this field.
   error?: Error;
 
   // Helpers
@@ -475,7 +475,7 @@ Property summary
 | `isSuccess` | `boolean` | `status === "success"` (actor instance created) |
 | `isError` | `boolean` | `status === "error"` |
 | `isAuthenticated` | `boolean` | Whether an identity has been attached to the actor |
-| `error` | `Error | undefined` | Any error that occurred during initialization or authentication |
+| `error` | `Error | undefined` | Any error that occurred during initialization. Authentication and interceptor errors do not populate this field. |
 | `authenticate` | `(identity: Identity) => Promise<void>` | Attach an identity to the actor's agent |
 | `setInterceptors` | `(interceptors: InterceptorOptions) => void` | Apply request/response interceptors to the actor |
 | `reset` | `() => void` | Reset the actor state and reinitialize |

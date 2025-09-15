@@ -73,7 +73,7 @@ export interface UseActorReturn<T> {
   isError: boolean;
   /** Whether the actor is authenticated with a non-anonymous identity */
   isAuthenticated: boolean;
-  /** Any error that occurred during initialization, authentication, or setting up interceptors */
+  /** Any error that occurred during initialization. Authentication and interceptor errors do not populate this field. */
   error: Error | undefined;
   /** Authenticate the actor with the provided identity by replacing the anonymous identity */
   authenticate: (identity: Identity) => Promise<void>;
@@ -92,53 +92,53 @@ function createInterceptorProxy<T>(
   actor: ActorSubclass<T>,
   interceptors?: InterceptorOptions,
 ): ActorSubclass<T> {
-  if (!interceptors) {
-    return actor;
-  }
+  if (!interceptors) return actor;
+
   return new Proxy(actor, {
     get(target, prop, receiver) {
       const originalProperty = Reflect.get(target, prop, receiver);
-      if (typeof originalProperty === "function") {
-        return async (...args: unknown[]) => {
-          try {
-            if (interceptors.onRequest) {
-              args = interceptors.onRequest({
-                methodName: prop as string,
-                args,
-              });
-            }
-            const response = await originalProperty.apply(target, args);
-            if (interceptors.onResponse) {
-              return interceptors.onResponse({
-                methodName: prop as string,
-                args,
-                response,
-              });
-            }
-            return response;
-          } catch (error) {
-            if (error instanceof TypeError) {
-              if (interceptors.onRequestError) {
-                error = interceptors.onRequestError({
-                  methodName: prop as string,
-                  args,
-                  error,
-                });
-              }
-            } else {
-              if (interceptors.onResponseError) {
-                error = interceptors.onResponseError({
-                  methodName: prop as string,
-                  args,
-                  error,
-                });
-              }
-            }
-            throw error;
+      if (typeof originalProperty !== "function") return originalProperty;
+
+      return async (...args: unknown[]) => {
+        try {
+          if (interceptors.onRequest) {
+            const modified = await Promise.resolve(
+              interceptors.onRequest({ methodName: prop as string, args }),
+            );
+            if (Array.isArray(modified)) args = modified;
           }
-        };
-      }
-      return originalProperty;
+        } catch (err) {
+          // If onRequest throws, forward to onRequestError if present
+          if (interceptors.onRequestError) {
+            const replacement = await Promise.resolve(
+              interceptors.onRequestError({ methodName: prop as string, args, error: err }),
+            );
+            throw replacement instanceof Error ? replacement : err;
+          }
+          throw err;
+        }
+
+        try {
+          const response = await originalProperty.apply(target, args);
+
+          if (interceptors.onResponse) {
+            return await Promise.resolve(
+              interceptors.onResponse({ methodName: prop as string, args, response }),
+            );
+          }
+
+          return response;
+        } catch (err) {
+          // If response threw, allow onResponseError to handle/transform
+          if (interceptors.onResponseError) {
+            const replacement = await Promise.resolve(
+              interceptors.onResponseError({ methodName: prop as string, args, error: err }),
+            );
+            throw replacement instanceof Error ? replacement : err;
+          }
+          throw err;
+        }
+      };
     },
   });
 }
@@ -336,8 +336,14 @@ export function createActorHook<T>(
       if (!agent) {
         throw new Error("No agent found for actor");
       }
-      agent.replaceIdentity!(identity);
 
+      if ('replaceIdentity' in agent && typeof agent.replaceIdentity === 'function') {
+        agent.replaceIdentity(identity)
+      } else {
+        throw new Error('Agent does not support replaceIdentity')
+      }
+
+      // Mark as authenticated (does not change the initialization status)
       store.send({
         type: "setState" as const,
         isAuthenticated: true,
@@ -347,8 +353,7 @@ export function createActorHook<T>(
       const err = error instanceof Error ? error : new Error(String(error));
       store.send({
         type: "setState" as const,
-        status: "error",
-        error: err,
+        isAuthenticated: false,
       });
       throw err;
     }
@@ -368,11 +373,7 @@ export function createActorHook<T>(
       const proxiedActor = createInterceptorProxy(_actor, interceptors);
       store.send({ type: "setState" as const, actor: proxiedActor });
     } catch (error) {
-      store.send({
-        type: "setState" as const,
-        status: "error",
-        error: error instanceof Error ? error : new Error(String(error)),
-      });
+      console.error("Failed to set interceptors for canister", options.canisterId, error);
     }
   };
 
