@@ -34,12 +34,12 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "@dfinity/agent": ">=3.1.0",
-    "@dfinity/candid": ">=3.1.0"
+    "@dfinity/agent": "^3",
+    "@dfinity/candid": "^3"
   },
   "devDependencies": {
-    "@dfinity/agent": "^3.1.0",
-    "@dfinity/candid": "^3.1.0",
+    "@dfinity/agent": "^3.2.7",
+    "@dfinity/candid": "^3.2.7",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.39",
     "esbuild": "^0.19.5",
