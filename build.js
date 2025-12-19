@@ -6,6 +6,6 @@ esbuild.build({
   outdir: "dist",
   format: "esm",
   splitting: true,
-  external: ["react", "react-dom", "@dfinity/agent", "@dfinity/candid"],
+  external: ["react", "react-dom", "@icp-sdk/core"],
   plugins: [],
 });
