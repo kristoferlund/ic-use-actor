@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## 0.4.0 - 2025-12-26
+
+### Changed
+
+- Replaced `@dfinity/agent` and `@dfinity/candid` with `@icp-sdk/core`
+
+Read more about the `@icp-sdk` packages at: https://js.icp.build
+
 ## 0.3.1 - 2025-10-01
 
 ### Changed

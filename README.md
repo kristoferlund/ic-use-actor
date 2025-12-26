@@ -42,19 +42,19 @@ A React hook library for interacting with Internet Computer (IC) canisters. `ic-
 ## Installation
 
 ```bash
-npm install ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
+npm install ic-use-actor @icp-sdk/core
 ```
 
 or
 
 ```bash
-yarn add ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
+yarn add ic-use-actor @icp-sdk/core
 ```
 
 or
 
 ```bash
-pnpm add ic-use-actor @dfinity/agent @dfinity/candid @xstate/store
+pnpm add ic-use-actor @icp-sdk/core 
 ```
 
 ## Quick Start
