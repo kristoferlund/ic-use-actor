@@ -6,8 +6,8 @@ import {
   HttpAgent,
   type HttpAgentOptions,
   type Identity,
-} from "@dfinity/agent";
-import { IDL } from "@dfinity/candid";
+} from "@icp-sdk/core/agent";
+import { IDL } from "@icp-sdk/core/candid";
 import { useSelector } from "@xstate/store/react";
 import type { InterceptorOptions } from "./interceptor-data.type";
 
